@@ -44,11 +44,26 @@ class FFT {
 
     // Parse and evaluate function string at given x
     evaluateFunction(funcStr, x) {
-        // Replace 'pi' with Math.PI and 'x' with the value
-        const evalStr = funcStr
-            .replace(/pi/g, 'Math.PI')
+        // Parse the function string into a function
+        const withConstants = funcStr
+            // Replace pi with the value of Math.PI
+            .replace(/\bpi\b/gi, '(' + Math.PI + ')')
+            // Replace |x| with Math.abs(x)
+            .replace(/\|(.*?)\|/g, 'Math.abs($1)')
+            // Add explicit multiplication for adjacent terms
+            .replace(/(\d|pi|\))\s*(\(|\|)/g, '$1*$2')  // handle pi(x) -> pi*(x) (also 2(x) & 2|x|)
+            .replace(/\)\s*(\w|\|)/g, ')*$1')           // handle sin(x)|x| -> sin(x)*|x|
+            .replace(/\|\s*(\w|\()/g, '|*$1');          // handle |x|sin(x) -> |x|*sin(x)
+        
+        // Replace 'x' strings with x variable
+        const evalStr = withConstants
             .replace(/x/g, `(${x})`);
-        return eval(evalStr);
+        
+        try {
+            return eval(evalStr);
+        } catch (e) {
+            throw new Error(`Invalid function: ${e.message}`);
+        }
     }
 
     generatePoints(funcStr) {
