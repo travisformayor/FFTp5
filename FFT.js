@@ -18,10 +18,10 @@ class FFT {
         // Following document formula: W_k = e^(-2πik/N) = cos(2πk/N) - i*sin(2πk/N)
         for (let k = 0; k < this.N / 2; k++) {
             const angle = (2 * Math.PI * k) / this.N;
-            W[k] = {
-                re: Math.cos(angle),
-                im: -Math.sin(angle)
-            };
+            W[k] = new Complex(
+                Math.cos(angle),
+                -Math.sin(angle)
+            );
         }
 
         return W;
@@ -57,7 +57,8 @@ class FFT {
 
         for (let j = 0; j < this.N; j++) {
             x[j] = -Math.PI + (2 * Math.PI * j) / this.N;
-            y[j] = this.evaluateFunction(funcStr, x[j]);
+            // Store as Complex number (just first param, so real part only)
+            y[j] = new Complex(this.evaluateFunction(funcStr, x[j]));
         }
 
         return { x, y };
