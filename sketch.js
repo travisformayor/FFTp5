@@ -86,42 +86,69 @@ function drawSpectrum(spectrum, yOffset) {
 
 // Unit Tests
 function testFFT() {
+  let testsPassed = 0;
+  let totalTests = 0;
+
   // Test power of 2 validation
+  totalTests++;
   try {
     new FFT(3);
-    console.error("Failed: Should reject N=3");
+    console.log("❌ Failed: Should reject N=3");
   } catch (e) {
-    console.log("Passed: N=3 validation");
+    console.log("✅ Passed: N=3 validation");
+    testsPassed++;
   }
 
   const fft = new FFT(8);
-  console.log(fft.bitReverseLookup);
 
   // Test twiddle factors
-  console.assert(
-    Math.abs(fft.W[0].re - 1.0) < 1e-10 &&
-    Math.abs(fft.W[0].im - 0.0) < 1e-10,
-    "W[0] incorrect"
-  );
+  totalTests++;
+  if (Math.abs(fft.W[0].re - 1.0) < 1e-10 && Math.abs(fft.W[0].im - 0.0) < 1e-10) {
+    console.log("✅ Passed: W[0] is correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: W[0] incorrect");
+  }
 
-  console.assert(
-    Math.abs(fft.W[1].re - 0.7071) < 1e-4 &&
-    Math.abs(fft.W[1].im + 0.7071) < 1e-4,
-    "W[1] incorrect"
-  );
+  totalTests++;
+  if (Math.abs(fft.W[1].re - 0.7071) < 1e-4 && Math.abs(fft.W[1].im + 0.7071) < 1e-4) {
+    console.log("✅ Passed: W[1] is correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: W[1] incorrect");
+  }
 
   // Test bit reversal
+  totalTests++;
   const expectedReversals = [0, 4, 2, 6, 1, 5, 3, 7];
   const allReversalsCorrect = expectedReversals.every(
     (val, idx) => fft.bitReverseLookup[idx] === val
   );
-  console.assert(allReversalsCorrect, "Bit reversal incorrect");
+  if (allReversalsCorrect) {
+    console.log("✅ Passed: Bit reversal is correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: Bit reversal incorrect");
+  }
 
   // Test point generation
-  const points = fft.generatePoints("pi*(pi-x)");
-  console.assert(points.x.length === 8, "Wrong number of points");
-  console.assert(
-    Math.abs(points.x[1] - points.x[0] - (2 * Math.PI / 8)) < 1e-10,
-    "Points not evenly spaced"
-  );
+  totalTests++;
+  const points = fft.generatePoints("pi(pi-x)");
+  if (points.x.length === 8) {
+    console.log("✅ Passed: Point count is correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: Wrong number of points");
+  }
+
+  totalTests++;
+  if (Math.abs(points.x[1] - points.x[0] - (2 * Math.PI / 8)) < 1e-10) {
+    console.log("✅ Passed: Points are evenly spaced");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: Points not evenly spaced");
+  }
+
+  // Summary
+  console.log(`\nTest Summary: ${testsPassed}/${totalTests} tests passed`);
 }
