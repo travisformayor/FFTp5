@@ -79,5 +79,56 @@ class FFT {
         return { x, y };
     }
 
+    butterflyCompute(input) {
+        // Compute complex numbers using butterfly pairs
 
+        // Convert input to array of Complex numbers if necessary
+        const signal = Array.isArray(input) ?
+            input.map(x => typeof x === 'number' ? new Complex(x) : x) :
+            input;
+
+        // Verify input length
+        if (signal.length !== this.N) {
+            throw new Error(`Input length must be ${this.N}`);
+        }
+
+        // Create working array and apply bit reversal
+        const X = new Array(this.N);
+        for (let i = 0; i < this.N; i++) {
+            X[this.bitReverseLookup[i]] = signal[i];
+        }
+
+        // Butterfly computation
+        for (let stage = 1; stage <= Math.log2(this.N); stage++) {
+            const butterflySize = 1 << stage;
+            const halfSize = butterflySize >> 1;
+
+            for (let j = 0; j < this.N; j += butterflySize) {
+                for (let k = 0; k < halfSize; k++) {
+                    const evenIndex = j + k;
+                    const oddIndex = j + k + halfSize;
+                    const even = X[evenIndex];
+                    const odd = X[oddIndex];
+
+                    // twiddle = W[k * N/butterflySize]
+                    const twiddleIndex = (k * this.N) / butterflySize;
+                    const twiddle = this.W[twiddleIndex % (this.N / 2)];
+
+                    // Butterfly operation
+                    const product = Complex.multiply(odd, twiddle);
+                    X[evenIndex] = Complex.add(even, product);
+                    X[oddIndex] = Complex.subtract(even, product);
+                }
+            }
+        }
+
+        return X;
+    }
+
+    // Helper method to compute FFT of a function
+    computeFunction(funcStr) {
+        const points = this.generatePoints(funcStr);
+        // Note: generatePoints returns Complex number objects
+        return this.butterflyCompute(points.y);
+    }
 }
