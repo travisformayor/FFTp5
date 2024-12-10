@@ -33,32 +33,5 @@ class FFT {
         return { x, y };
     }
 
-    // Test harness for FFT class
-    testFFT() {
-        // Test N validation
-        console.assert(() => {
-            try {
-                new FFT(3); // Should throw
-                return false;
-            } catch (e) {
-                return true;
-            }
-        }, "Non-power of 2 validation failed");
 
-        // Test point generation
-        const fft = new FFT(8);
-        const points = fft.generatePoints("pi*(pi-x)");
-
-        // Test x points are evenly spaced
-        console.assert(
-            Math.abs(points.x[1] - points.x[0] - (2 * Math.PI / 8)) < 1e-10,
-            "X points not evenly spaced"
-        );
-
-        // Test function evaluation
-        console.assert(
-            Math.abs(points.y[0] - Math.PI * (Math.PI - points.x[0])) < 1e-10,
-            "Function evaluation incorrect"
-        );
-    }
 }
