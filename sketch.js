@@ -173,12 +173,13 @@ function testFFT() {
     testsPassed++;
   }
 
-  const fft = new FFT(8);
+  // Use N = 8 for all remaining tests
+  const fft8 = new FFT(8);
 
   // Test bit reversal application
   totalTests++;
   const testSignal = [1, 2, 3, 4, 5, 6, 7, 8].map(x => new Complex(x));
-  const reversedSignal = fft.applyBitReversal(testSignal);
+  const reversedSignal = fft8.applyBitReversal(testSignal);
   const expectedOrder = [1, 5, 3, 7, 2, 6, 4, 8];
   const correctOrder = expectedOrder.every((val, idx) =>
     Math.abs(reversedSignal[idx].re - val) < 1e-10
@@ -194,7 +195,7 @@ function testFFT() {
 
   // Test point generation
   totalTests++;
-  const points = fft.generatePoints("pi(pi-x)");
+  const points = fft8.generatePoints("pi(pi-x)");
   if (points.x.length === 8) {
     console.log("✅ Passed: Point count is correct");
     testsPassed++;
@@ -212,13 +213,12 @@ function testFFT() {
 
   // Test butterfly pair generation
   totalTests++;
-  const fft8 = new FFT(8);
   const stage1Pairs = fft8.getButterflyPairs(1, 8);
   const expectedStage1 = [
-    { pair: [0, 4], k: 0, distance: 4 },
-    { pair: [1, 5], k: 1, distance: 4 },
-    { pair: [2, 6], k: 2, distance: 4 },
-    { pair: [3, 7], k: 3, distance: 4 }
+    { pair: [0, 1], k: 0, distance: 1 },
+    { pair: [2, 3], k: 2, distance: 1 },
+    { pair: [4, 5], k: 4, distance: 1 },
+    { pair: [6, 7], k: 6, distance: 1 }
   ];
   if (JSON.stringify(stage1Pairs) === JSON.stringify(expectedStage1)) {
     console.log("✅ Passed: Stage 1 butterfly pairs correct");
@@ -249,11 +249,12 @@ function testFFT() {
   totalTests++;
   const stage3Pairs = fft8.getButterflyPairs(3, 8);
   const expectedStage3 = [
-    { pair: [0, 1], k: 0, distance: 1 },
-    { pair: [2, 3], k: 2, distance: 1 },
-    { pair: [4, 5], k: 4, distance: 1 },
-    { pair: [6, 7], k: 6, distance: 1 }
+    { pair: [0, 4], k: 0, distance: 4 },
+    { pair: [1, 5], k: 1, distance: 4 },
+    { pair: [2, 6], k: 2, distance: 4 },
+    { pair: [3, 7], k: 3, distance: 4 }
   ];
+
   if (JSON.stringify(stage3Pairs) === JSON.stringify(expectedStage3)) {
     console.log("✅ Passed: Stage 3 butterfly pairs correct");
     testsPassed++;

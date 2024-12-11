@@ -66,7 +66,8 @@ class FFT {
 
     // Select the correct pairs for each butterfly round
     getButterflyPairs(stage, N) {
-        const distance = N / Math.pow(2, stage); // Distance between pairs decreases with each stage
+        // const distance = N / Math.pow(2, stage); // Distance between pairs decreases with each stage
+        const distance = Math.pow(2, stage - 1); // Distance between pairs increases with each stage
         const pairs = [];
 
         // Outer loop: jump by distance*2 to handle next group
@@ -88,9 +89,11 @@ class FFT {
     }
 
     // Retrieve the correct twiddle factor
-    getTwiddleFactor(k, butterflySize, N) {
+    getTwiddleFactor(k, distance, N) {
         // todo: add caching here
-        return this.W(k, N);
+        const stageK = k * (N / (distance * 2));  // k scaling
+
+        return this.W(stageK, N);
     }
 
     // Return the twiddle factor for k and N, with looping
@@ -128,18 +131,13 @@ class FFT {
 
     // Compute complex numbers using butterfly pairs
     butterflyCompute(input) {
-        // Convert input to array of Complex numbers if necessary
-        const signal = Array.isArray(input) ?
-            input.map(x => typeof x === 'number' ? new Complex(x) : x) :
-            input;
-
         // Verify input length
-        if (signal.length !== this.N) {
+        if (input.length !== this.N) {
             throw new Error(`Input length must be ${this.N}`);
         }
 
         // Use the exposed method for bit reversal
-        const X = this.applyBitReversal(signal);
+        const X = this.applyBitReversal(input);
 
         // Butterfly computation
         for (let stage = 1; stage <= Math.log2(this.N); stage++) {
@@ -149,8 +147,13 @@ class FFT {
                 const even = X[evenIndex];
                 const odd = X[oddIndex];
 
+                // Multiply twiddle by odd BEFORE adding/subtracting
                 const twiddle = this.getTwiddleFactor(k, distance, this.N);
                 const product = Complex.multiply(odd, twiddle);
+
+                // Forward FFT butterfly operation:
+                // New Even = Even + (Twiddle × Odd)
+                // New Odd  = Even - (Twiddle × Odd)
                 X[evenIndex] = Complex.add(even, product);
                 X[oddIndex] = Complex.subtract(even, product);
             }
