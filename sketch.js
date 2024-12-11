@@ -3,7 +3,7 @@ let functionInput = "sin(x)";  // Default function
 let N = 32;  // Increased from 8 for better visualization
 
 function setup() {
-  createCanvas(800, 400);
+  createCanvas(800, 800);
   testFFT();
   fft = new FFT(N);
 
@@ -42,8 +42,8 @@ function draw() {
 function drawFunction(points, yOffset, label) {
   // Draw axes
   stroke(0);
-  line(0, yOffset + height / 4, width, yOffset + height / 4);  // x-axis
-  line(width / 2, yOffset, width / 2, yOffset + height / 2);     // y-axis
+  line(0, yOffset + height / 6, width, yOffset + height / 6);  // x-axis
+  line(width / 2, yOffset, width / 2, yOffset + height / 3);   // y-axis
 
   // Draw function
   stroke(0, 0, 255);
@@ -52,8 +52,8 @@ function drawFunction(points, yOffset, label) {
   for (let i = 0; i < points.x.length; i++) {
     // Map x from [-π, π] to [0, width]
     let x = map(points.x[i], -Math.PI, Math.PI, 0, width);
-    // Map y to quarter of height, using real part of Complex number
-    let y = map(points.y[i].re, -3, 3, yOffset + height / 2, yOffset);
+    // Map y using real part of Complex number
+    let y = map(points.y[i].re, -3, 3, yOffset + height / 3, yOffset);
     vertex(x, y);
   }
   endShape();
@@ -61,54 +61,48 @@ function drawFunction(points, yOffset, label) {
   // Draw label
   noStroke();
   fill(0);
-  textSize(20);
+  textSize(16);
+  textAlign(LEFT);
   text(label, 10, yOffset + 20);
 }
 
 function drawSpectrum(spectrum, yOffset, coefficients) {
   // Draw axes
   stroke(0);
-  line(0, yOffset + height / 4, width, yOffset + height / 4);  // x-axis
-  line(0, yOffset, 0, yOffset + height / 2);                   // y-axis
+  line(0, yOffset + height / 6, width, yOffset + height / 6);  // x-axis (moved up)
+  line(0, yOffset, 0, yOffset + height / 3);                   // y-axis
 
   // Draw magnitude spectrum
   stroke(255, 0, 0);
   const barWidth = width / spectrum.length;
 
+  // Draw spectrum bars and coefficients
   for (let i = 0; i < spectrum.length; i++) {
     const magnitude = Complex.magnitude(spectrum[i]);
-    const barHeight = map(magnitude, 0, N / 2, 0, height / 4);
+    const barHeight = map(magnitude, 0, N / 2, 0, height / 6);
 
     fill(255, 0, 0, 150);
-    rect(i * barWidth, yOffset + height / 4,
+    rect(i * barWidth, yOffset + height / 6,
       barWidth - 2, -barHeight);
 
-    // Show coefficient values
-    if (i <= N / 2) {
-      fill(0);
-      noStroke();
-      textSize(10);
-
-      // Show ak coefficients
-      if (i === 0) {
-        text(`a_0=${coefficients.a[i].toFixed(2)}`,
-          i * barWidth * 2.6, yOffset + height / 4 - 40);
-      } else if (i === N / 2) {
-        text(`a_${N / 2}=${coefficients.a[i].toFixed(2)}`,
-          i * barWidth * 2.6, yOffset + height / 4 - 40);
-      } else {
-        text(`a_${i}=${coefficients.a[i].toFixed(2)}`,
-          i * barWidth * 2.6, yOffset + height / 4 - 40);
-        text(`b_${i}=${coefficients.b[i].toFixed(2)}`,
-          i * barWidth * 2.6, yOffset + height / 4 - 25);
-      }
-    }
-
     // Add frequency labels
-    if (i % 4 === 0) {  // Label every 4th frequency
-      fill(0);
-      noStroke();
-      text(i, i * barWidth, yOffset + height / 4 + 15);
+    fill(0);
+    noStroke();
+    textAlign(CENTER);
+    textSize(12);
+    text(i, i * barWidth + barWidth / 2, yOffset + height / 6 + 15);
+
+    // Show coefficient values under frequency bars
+    textAlign(LEFT);
+    if (i <= N / 2) {
+      // show a coefficients for all i values
+      text(`a${i}=${coefficients.a[i].toFixed(3)}`,
+        i * barWidth * 2.5 + 10, yOffset + 20);
+      if (i !== 0 && i !== N / 2) {
+        // show b coefficients for all i except 0 and N/2
+        text(`b${i}=${coefficients.b[i].toFixed(3)}`,
+          i * barWidth * 2.5 + 10, yOffset + 40);
+      }
     }
   }
 }
@@ -116,13 +110,14 @@ function drawSpectrum(spectrum, yOffset, coefficients) {
 function drawReconstructed(coefficients, yOffset, label) {
   // Draw axes
   stroke(0);
-  line(0, yOffset + height / 6, width, yOffset + height / 6);
-  line(width / 2, yOffset, width / 2, yOffset + height / 3);
+  line(0, yOffset + height / 6, width, yOffset + height / 6);  // x-axis
+  line(width / 2, yOffset, width / 2, yOffset + height / 3);   // y-axis
 
   // Draw label
   noStroke();
   fill(0);
-  textSize(20);
+  textSize(16);
+  textAlign(LEFT);
   text(label, 10, yOffset + 20);
 
   // Draw reconstructed function
