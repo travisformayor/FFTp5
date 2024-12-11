@@ -8,8 +8,10 @@
 3. Twiddle factor (W) computation for roots of unity (Step 2a)
 4. Bit reversal lookup table (Step 2b)
 5. Butterfly computation implementation (Step 3)
-6. Basic visualization framework
-7. Comprehensive test suite for core components
+6. Coefficient Extraction (Step 4)
+7. Fourier Series Construction (Step 5)
+8. Visualizations
+9. Comprehensive test suite for core components
 
 ### Project Structure
 - `index.html`: P5.js setup and configuration
@@ -20,27 +22,12 @@
 ## Development Roadmap
 
 ### Pending Implementation
-1. Coefficient Extraction (Step 4)
-   - Convert complex values to ak and bk coefficients
-   - Implement scaling factor 2/N
-   - Handle special cases for a0 and aN/2
 
-2. Fourier Series Construction (Step 5)
-   - Implement series evaluation function
-   - Create symbolic representation
-   - Add coefficient visualization
-
-3. Enhanced Visualization Features
-   - Display coefficient values
-   - Show phase information
-   - Interactive frequency component analysis
-   - Real-time function modification
-
-4. Additional Testing
-   - Coefficient extraction validation
-   - Series interpolation approximation accuracy
+1. Additional Testing
+   - Edge case handling for complex functions
+   - Numerical stability tests for large N values
+   - Performance optimization testing
    - Error analysis for known functions
-   - Edge case handling
 
 ## Technical Specifications
 
@@ -59,13 +46,8 @@
 3. Bit reversal algorithm correctness
 4. Point generation and spacing verification
 5. Butterfly computation validation
-
-#### Planned Test Cases
-1. Coefficient extraction accuracy
-2. Series interpolation approximation accuracy
-3. Known function transformations
-4. Edge case handling
-5. Numerical stability tests
+6. Coefficient extraction accuracy
+7. Series interpolation approximation accuracy
 
 ## Contributing
 When implementing new features or modifications:
