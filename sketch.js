@@ -1,17 +1,20 @@
 let fft;
-let functionInput = "sin(x)";  // Default function
-let N = 16;  // Increase for smoother line (more points)
+let functionString = "sin(x)";  // Default function
+let N = 8;  // Increase for smoother line (more points)
 
 const width = 800;
-const height = 700;
+const height = 600;
 
 // Layout section positions. x and y are top left corner
 const buffer = 10;
-const input = { h: 25, w: 200 };
+const functionLabelWidth = 80;
+const inputBox = { x: functionLabelWidth, h: 25, w: 100 };
+const dropdownLabelWidth = 25;
+const dropdownBox = { x: dropdownLabelWidth, h: 25, w: 60 };
 const spectrum = { h: 60 };
 const body = { w: (width - (buffer * 2) - (width / 4)) };
 const graph = {
-  h: (height - input.h - (buffer * 5) - spectrum.h) / 2,
+  h: (height - inputBox.h - (buffer * 5) - spectrum.h) / 2,
   w: body.w,
 };
 const coeffsBox = {
@@ -19,11 +22,12 @@ const coeffsBox = {
   w: width - body.w - (buffer * 3)
 };
 const layout = {
-  input: { x: buffer, y: buffer, w: input.w, h: input.h },
-  original: { x: buffer, y: (buffer * 2) + input.h, w: graph.w, h: graph.h },
-  interpolated: { x: buffer, y: (buffer * 3) + input.h + graph.h, w: graph.w, h: graph.h },
-  spectrum: { x: buffer, y: (buffer * 4) + input.h + (graph.h * 2), w: graph.w, h: spectrum.h },
-  coefficients: { x: (buffer * 2) + graph.w, y: input.h + (buffer * 2), w: coeffsBox.w, h: coeffsBox.h },
+  inputBox: { x: buffer + inputBox.x, y: buffer, w: inputBox.w, h: inputBox.h },
+  dropdownBox: { x: (buffer * 3) + inputBox.x + inputBox.w + dropdownBox.x, y: buffer, w: dropdownBox.w, h: dropdownBox.h },
+  original: { x: buffer, y: (buffer * 2) + inputBox.h, w: graph.w, h: graph.h },
+  interpolated: { x: buffer, y: (buffer * 3) + inputBox.h + graph.h, w: graph.w, h: graph.h },
+  spectrum: { x: buffer, y: (buffer * 4) + inputBox.h + (graph.h * 2), w: graph.w, h: spectrum.h },
+  coefficients: { x: (buffer * 2) + graph.w, y: inputBox.h + (buffer * 2), w: coeffsBox.w, h: coeffsBox.h },
 };
 
 function setup() {
@@ -32,11 +36,35 @@ function setup() {
   fft = new FFT(N);
 
   // Function input field
-  let input = createInput(functionInput);
-  input.position(layout.input.x, layout.input.y);
-  input.size(layout.input.w - 8, layout.input.h - 6);
-  input.input(() => {
-    functionInput = input.value();
+  let functionLabel = createElement('label', 'Function:');
+  functionLabel.position(layout.inputBox.x - functionLabelWidth, layout.inputBox.y);
+  functionLabel.style('font-size', '20px');
+
+  let functionInput = createInput(functionString);
+  functionInput.position(layout.inputBox.x, layout.inputBox.y);
+  functionInput.size(layout.inputBox.w - 8, layout.inputBox.h - 6);  // Make room for label and dropdown
+  functionInput.style('font-size', '18px');
+  functionInput.input(() => {
+    functionString = functionInput.value();
+  });
+
+  // N selection dropdown
+  let nLabel = createElement('label', 'N:');
+  nLabel.position(layout.dropdownBox.x - dropdownLabelWidth, layout.dropdownBox.y);
+  nLabel.style('font-size', '20px');
+
+  let nSelect = createSelect();
+  nSelect.position(layout.dropdownBox.x, layout.dropdownBox.y);
+  nSelect.style('font-size', '18px');
+  nSelect.size(layout.dropdownBox.w, layout.dropdownBox.h);
+  nSelect.option('4');
+  nSelect.option('8');
+  nSelect.option('16');
+  nSelect.option('32');
+  nSelect.selected(N.toString());
+  nSelect.changed(() => {
+    N = parseInt(nSelect.value());
+    fft = new FFT(N);  // Recreate FFT with new N
   });
 }
 
@@ -51,11 +79,15 @@ function draw() {
   }
 
   try {
+    // Generate points for displaying original and use in interpolation
+    const highResPoints = fft.generatePoints(functionString, 64);
+    const fftPoints = fft.generatePoints(functionString);
+
     // Compute FFT and get coefficients
-    const result = fft.computeFunction(functionInput);
+    const result = fft.computeFunction(fftPoints);
 
     // Draw original function
-    drawFunction(result.points, layout.original, 'Original', [0, 0, 255]);
+    drawFunction(highResPoints, layout.original, 'Original', [0, 0, 255]);
 
     // Draw interpolated function
     const interpolatedPoints = fft.generateInterpolatedPoints(result.coefficients);

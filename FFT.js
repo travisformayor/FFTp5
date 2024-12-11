@@ -51,14 +51,13 @@ class FFT {
         }
     }
 
-    generatePoints(funcStr) {
-        const x = new Array(this.N);
-        const y = new Array(this.N);
+    generatePoints(funcStr, numPoints = this.N) {
+        const x = new Array(numPoints);
+        const y = new Array(numPoints);
 
         // Generate points
-        for (let j = 0; j < this.N; j++) {
-            x[j] = -Math.PI + (2 * Math.PI * j) / (this.N);
-            // Store as Complex number (just first param, so real part only)
+        for (let j = 0; j < numPoints; j++) {
+            x[j] = -Math.PI + (2 * Math.PI * j) / (numPoints);
             y[j] = new Complex(this.evaluateFunction(funcStr, x[j]));
         }
 
@@ -185,8 +184,7 @@ class FFT {
     }
 
     // Helper method to compute FFT of a function
-    computeFunction(funcStr) {
-        const points = this.generatePoints(funcStr);
+    computeFunction(points) {
         const spectrum = this.butterflyCompute(points.y);
         const coefficients = this.extractCoefficients(spectrum);
 
