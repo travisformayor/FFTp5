@@ -19,25 +19,27 @@ function draw() {
   background(220);
 
   try {
-    // Compute FFT
-    const points = fft.generatePoints(functionInput);
-    const spectrum = fft.computeFunction(functionInput);
+    // Compute FFT and get coefficients
+    const result = fft.computeFunction(functionInput);
 
     // Draw original function
-    drawFunction(points, 0);
+    drawFunction(result.points, 0, 'Original');
+
+    // Draw reconstructed function
+    drawReconstructed(result.coefficients, height / 3, 'Reconstructed');
 
     // Draw magnitude spectrum
-    drawSpectrum(spectrum, height / 2);
+    drawSpectrum(result.spectrum, 2 * height / 3, result.coefficients);
 
   } catch (e) {
-    // Handle invalid function input
+    // Display errors
     textSize(16);
     fill(255, 0, 0);
-    text("Invalid function: " + e.message, 10, 30);
+    text(e.message, 10, 30);
   }
 }
 
-function drawFunction(points, yOffset) {
+function drawFunction(points, yOffset, label) {
   // Draw axes
   stroke(0);
   line(0, yOffset + height / 4, width, yOffset + height / 4);  // x-axis
@@ -55,13 +57,19 @@ function drawFunction(points, yOffset) {
     vertex(x, y);
   }
   endShape();
+
+  // Draw label
+  noStroke();
+  fill(0);
+  textSize(20);
+  text(label, 10, yOffset + 20);
 }
 
-function drawSpectrum(spectrum, yOffset) {
+function drawSpectrum(spectrum, yOffset, coefficients) {
   // Draw axes
   stroke(0);
   line(0, yOffset + height / 4, width, yOffset + height / 4);  // x-axis
-  line(0, yOffset, 0, yOffset + height / 2);                 // y-axis
+  line(0, yOffset, 0, yOffset + height / 2);                   // y-axis
 
   // Draw magnitude spectrum
   stroke(255, 0, 0);
@@ -75,6 +83,27 @@ function drawSpectrum(spectrum, yOffset) {
     rect(i * barWidth, yOffset + height / 4,
       barWidth - 2, -barHeight);
 
+    // Show coefficient values
+    if (i <= N / 2) {
+      fill(0);
+      noStroke();
+      textSize(10);
+
+      // Show ak coefficients
+      if (i === 0) {
+        text(`a_0=${coefficients.a[i].toFixed(2)}`,
+          i * barWidth * 2.6, yOffset + height / 4 - 40);
+      } else if (i === N / 2) {
+        text(`a_${N / 2}=${coefficients.a[i].toFixed(2)}`,
+          i * barWidth * 2.6, yOffset + height / 4 - 40);
+      } else {
+        text(`a_${i}=${coefficients.a[i].toFixed(2)}`,
+          i * barWidth * 2.6, yOffset + height / 4 - 40);
+        text(`b_${i}=${coefficients.b[i].toFixed(2)}`,
+          i * barWidth * 2.6, yOffset + height / 4 - 25);
+      }
+    }
+
     // Add frequency labels
     if (i % 4 === 0) {  // Label every 4th frequency
       fill(0);
@@ -82,6 +111,30 @@ function drawSpectrum(spectrum, yOffset) {
       text(i, i * barWidth, yOffset + height / 4 + 15);
     }
   }
+}
+
+function drawReconstructed(coefficients, yOffset, label) {
+  // Draw axes
+  stroke(0);
+  line(0, yOffset + height / 6, width, yOffset + height / 6);
+  line(width / 2, yOffset, width / 2, yOffset + height / 3);
+
+  // Draw label
+  noStroke();
+  fill(0);
+  textSize(20);
+  text(label, 10, yOffset + 20);
+
+  // Draw reconstructed function
+  stroke(0, 255, 0);
+  noFill();
+  beginShape();
+  for (let i = 0; i < width; i++) {
+    const x = map(i, 0, width, -Math.PI, Math.PI);
+    const y = fft.evaluateSeries(coefficients, x);
+    vertex(i, map(y, -3, 3, yOffset + height / 3, yOffset));
+  }
+  endShape();
 }
 
 // Unit Tests
@@ -147,6 +200,55 @@ function testFFT() {
     testsPassed++;
   } else {
     console.log("❌ Failed: Points not evenly spaced");
+  }
+
+  // Test coefficient extraction
+  totalTests++;
+  const testSignal = [
+    new Complex(1),    // C₀
+    new Complex(0, 1), // C₁
+    new Complex(-1),   // C₂
+    new Complex(0)     // C₃
+  ];
+  const testFFT = new FFT(4);
+  const coeffs = testFFT.extractCoefficients(testSignal);
+
+  // Test a₀
+  if (Math.abs(coeffs.a[0] - 0.5) < 1e-10) {
+    console.log("✅ Passed: a₀ coefficient correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: a₀ coefficient incorrect");
+  }
+
+  totalTests++;
+  // Test a₁ and b₁
+  if (Math.abs(coeffs.a[1]) < 1e-10 && Math.abs(coeffs.b[1] - (-0.5)) < 1e-10) {
+    console.log("✅ Passed: a₁ and b₁ coefficients correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: a₁ and b₁ coefficients incorrect");
+  }
+
+  totalTests++;
+  // Test a₂ (final coefficient)
+  if (Math.abs(coeffs.a[2] + 0.5) < 1e-10) {
+    console.log("✅ Passed: a₂ coefficient correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: a₂ coefficient incorrect");
+  }
+
+  // Test series reconstruction
+  totalTests++;
+  const x = Math.PI / 4;
+  const reconstructed = testFFT.evaluateSeries(coeffs, x);
+  const expected = 0.25 + 0.5 * Math.sin(x) - 0.5 * Math.cos(2 * x);
+  if (Math.abs(reconstructed - expected) < 1e-10) {
+    console.log("✅ Passed: Series reconstruction correct");
+    testsPassed++;
+  } else {
+    console.log("❌ Failed: Series reconstruction incorrect");
   }
 
   // Summary

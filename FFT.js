@@ -125,10 +125,52 @@ class FFT {
         return X;
     }
 
+    extractCoefficients(complexValues) {
+        const coefficients = {
+            a: new Array(this.N / 2 + 1).fill(0),
+            b: new Array(this.N / 2).fill(0)
+        };
+
+        // Special case: a0
+        coefficients.a[0] = (2 / this.N) * complexValues[0].re;
+
+        // General cases: ak and bk
+        for (let k = 1; k < this.N / 2; k++) {
+            coefficients.a[k] = (2 / this.N) * complexValues[k].re;
+            coefficients.b[k] = -(2 / this.N) * complexValues[k].im;
+        }
+
+        // Special case: aN/2
+        coefficients.a[this.N / 2] = (2 / this.N) * complexValues[this.N / 2].re;
+
+        return coefficients;
+    }
+
+    evaluateSeries(coefficients, x) {
+        let sum = coefficients.a[0] / 2;  // First term is halved
+        
+        // Add the middle terms
+        for (let k = 1; k < this.N / 2; k++) {
+            sum += coefficients.a[k] * Math.cos(k * x) + 
+                   coefficients.b[k] * Math.sin(k * x);
+        }
+        
+        // Add the last cosine term (k = N/2)
+        sum += (coefficients.a[this.N / 2] * Math.cos((this.N / 2) * x)) / 2;  // Last term is halved
+        
+        return sum;
+    }
+
     // Helper method to compute FFT of a function
     computeFunction(funcStr) {
         const points = this.generatePoints(funcStr);
-        // Note: generatePoints returns Complex number objects
-        return this.butterflyCompute(points.y);
+        const spectrum = this.butterflyCompute(points.y);
+        const coefficients = this.extractCoefficients(spectrum);
+        
+        return {
+            spectrum,
+            coefficients,
+            points
+        };
     }
 }
