@@ -15,12 +15,12 @@ class FFT {
     precomputeTwiddles() {
         const W = new Array(this.N / 2);
 
-        // Following document formula: W_k = e^(2πik/N) = cos(2πk/N) + i*sin(2πk/N)
+        // Following document formula: W_k = e^(-2πik/N) = cos(2πk/N) - i*sin(2πk/N)
         for (let k = 0; k < this.N / 2; k++) {
             const angle = (2 * Math.PI * k) / this.N;
             W[k] = new Complex(
                 Math.cos(angle),
-                Math.sin(angle)
+                -Math.sin(angle)
             );
         }
 
@@ -105,6 +105,14 @@ class FFT {
         return this.W[twiddleIndex % (N / 2)];
     }
 
+    // Add new method to expose bit reversal operation
+    applyBitReversal(signal) {
+        const X = new Array(this.N);
+        for (let i = 0; i < this.N; i++) {
+            X[i] = signal[this.bitReverseLookup[i]];
+        }
+        return X;
+    }
 
     // Compute complex numbers using butterfly pairs
     butterflyCompute(input) {
@@ -118,11 +126,8 @@ class FFT {
             throw new Error(`Input length must be ${this.N}`);
         }
 
-        // Create working array and apply bit reversal
-        const X = new Array(this.N);
-        for (let i = 0; i < this.N; i++) {
-            X[this.bitReverseLookup[i]] = signal[i];
-        }
+        // Use the exposed method for bit reversal
+        const X = this.applyBitReversal(signal);
 
         // Butterfly computation
         for (let stage = 1; stage <= Math.log2(this.N); stage++) {

@@ -175,17 +175,21 @@ function testFFT() {
 
   const fft = new FFT(8);
 
-  // Test bit reversal
+  // Test bit reversal application
   totalTests++;
-  const expectedReversals = [0, 4, 2, 6, 1, 5, 3, 7];
-  const allReversalsCorrect = expectedReversals.every(
-    (val, idx) => fft.bitReverseLookup[idx] === val
+  const testSignal = [1, 2, 3, 4, 5, 6, 7, 8].map(x => new Complex(x));
+  const reversedSignal = fft.applyBitReversal(testSignal);
+  const expectedOrder = [1, 5, 3, 7, 2, 6, 4, 8];
+  const correctOrder = expectedOrder.every((val, idx) => 
+    Math.abs(reversedSignal[idx].re - val) < 1e-10
   );
-  if (allReversalsCorrect) {
-    console.log("✅ Passed: Bit reversal is correct");
+  if (correctOrder) {
+    console.log("✅ Passed: Bit reversal correctly applied");
     testsPassed++;
   } else {
-    console.log("❌ Failed: Bit reversal incorrect");
+    console.log("❌ Failed: Bit reversal incorrectly applied");
+    console.log("Expected order:", expectedOrder);
+    console.log("Got:", reversedSignal.map(x => x.re));
   }
 
   // Test point generation
