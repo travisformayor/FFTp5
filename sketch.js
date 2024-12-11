@@ -1,5 +1,5 @@
 let fft;
-let functionInput = "sin(x)";  // Default function
+let functionInput = "x*sin(x)";  // Default function
 let N = 16;  // Increase for smoother line (more points)
 
 const width = 800;
@@ -8,21 +8,21 @@ const height = 700;
 // Layout section positions. x and y are top left corner
 const buffer = 10;
 const input = { h: 25, w: 200 };
-const spectrum = { h: 40 };
+const spectrum = { h: 60 };
 const body = { w: (width - (buffer * 2) - (width / 4)) };
 const graph = {
-  h: (height - input.h - (buffer * 4) - spectrum.h) / 2,
+  h: (height - input.h - (buffer * 5) - spectrum.h) / 2,
   w: body.w,
 };
 const coeffsBox = {
-  h: (graph.h * 2) + buffer + spectrum.h,
+  h: (graph.h * 2) + (buffer * 2) + spectrum.h,
   w: width - body.w - (buffer * 3)
 };
 const layout = {
   input: { x: buffer, y: buffer, w: input.w, h: input.h },
   original: { x: buffer, y: (buffer * 2) + input.h, w: graph.w, h: graph.h },
-  interpolated: { x: buffer, y: (buffer * 2) + input.h + graph.h, w: graph.w, h: graph.h },
-  spectrum: { x: buffer, y: (buffer * 3) + input.h + (graph.h * 2), w: graph.w, h: spectrum.h },
+  interpolated: { x: buffer, y: (buffer * 3) + input.h + graph.h, w: graph.w, h: graph.h },
+  spectrum: { x: buffer, y: (buffer * 4) + input.h + (graph.h * 2), w: graph.w, h: spectrum.h },
   coefficients: { x: (buffer * 2) + graph.w, y: input.h + (buffer * 2), w: coeffsBox.w, h: coeffsBox.h },
 };
 
@@ -33,8 +33,8 @@ function setup() {
 
   // Function input field
   let input = createInput(functionInput);
-  input.position(layout.input.x + 1, layout.input.y + 1);
-  input.size(layout.input.w - 9, layout.input.h - 7);
+  input.position(layout.input.x, layout.input.y);
+  input.size(layout.input.w - 8, layout.input.h - 6);
   input.input(() => {
     functionInput = input.value();
   });
@@ -42,6 +42,13 @@ function setup() {
 
 function draw() {
   background(225);
+
+  // Draw each section container
+  noStroke();
+  fill(255);
+  for (const section in layout) {
+    rect(layout[section].x, layout[section].y, layout[section].w, layout[section].h);
+  }
 
   try {
     // Compute FFT and get coefficients
@@ -65,12 +72,6 @@ function draw() {
     text(e.message, layout.original.x + 20, layout.original.y + 20);
   }
 
-  // Draw each section's outline
-  noFill();
-  stroke(0);
-  for (const section in layout) {
-    rect(layout[section].x, layout[section].y, layout[section].w, layout[section].h);
-  }
 }
 
 function drawFunction(points, section, label, color = [0, 0, 255]) {
@@ -103,11 +104,6 @@ function drawFunction(points, section, label, color = [0, 0, 255]) {
 function drawSpectrum(spectrum, coefficients) {
   const section = layout.spectrum;
 
-  // Draw axes
-  stroke(0);
-  line(section.x, section.y + section.h / 2, section.x + section.w, section.y + section.h / 2);  // x-axis (moved up)
-  line(section.x + section.w / 2, section.y, section.x + section.w / 2, section.y + section.h);   // y-axis
-
   // Draw magnitude spectrum
   stroke(255, 0, 0);
   const barWidth = section.w / spectrum.length;
@@ -115,10 +111,10 @@ function drawSpectrum(spectrum, coefficients) {
   // Draw spectrum bars and coefficients
   for (let i = 0; i < spectrum.length; i++) {
     const magnitude = Complex.magnitude(spectrum[i]);
-    const barHeight = map(magnitude, 0, N / 2, 0, section.h);
+    const barHeight = map(magnitude, 0, N, 0, section.h);
 
     fill(255, 0, 0, 150);
-    rect(i * barWidth, section.y,
+    rect(i * barWidth + section.x + 1.5, section.y,
       barWidth - 2, -barHeight);
 
     // Add frequency labels
@@ -126,7 +122,7 @@ function drawSpectrum(spectrum, coefficients) {
     noStroke();
     textAlign(CENTER);
     textSize(12);
-    text(i, i * barWidth + barWidth / 2, section.y + 15);
+    text(i, i * barWidth + barWidth / 2 + section.x, section.y + 15);
   }
 }
 
