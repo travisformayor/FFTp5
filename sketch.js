@@ -1,5 +1,5 @@
 let fft;
-let functionInput = "x*sin(x)";  // Default function
+let functionInput = "cos(x)";  // Default function
 let N = 16;  // Increase for smoother line (more points)
 
 const width = 800;

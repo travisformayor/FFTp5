@@ -20,7 +20,7 @@ class FFT {
             const angle = (2 * Math.PI * k) / this.N;
             W[k] = new Complex(
                 Math.cos(angle),
-                -Math.sin(angle)
+                Math.sin(angle)
             );
         }
 
@@ -54,11 +54,11 @@ class FFT {
             .replace(/(\d|pi|\))\s*(\(|\|)/g, '$1*$2')  // handle pi(x) -> pi*(x) (also 2(x) & 2|x|)
             .replace(/\)\s*(\w|\|)/g, ')*$1')           // handle sin(x)|x| -> sin(x)*|x|
             .replace(/\|\s*(\w|\()/g, '|*$1');          // handle |x|sin(x) -> |x|*sin(x)
-        
+
         // Replace 'x' strings with x variable
         const evalStr = withConstants
             .replace(/x/g, `(${x})`);
-        
+
         try {
             return eval(evalStr);
         } catch (e) {
@@ -147,18 +147,21 @@ class FFT {
     }
 
     evaluateSeries(coefficients, x) {
-        let sum = coefficients.a[0] / 2;  // First term is halved
-        
-        // Add the middle terms
-        for (let k = 1; k < this.N / 2; k++) {
-            sum += coefficients.a[k] * Math.cos(k * x) + 
-                   coefficients.b[k] * Math.sin(k * x);
+        // Implementation of:
+        // S_m(x) = (a_0 + a_m*cos(mx))/2 + Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
+        // where m = N/2 (maximum degree)
+
+        // First term: (a_0 + a_m*cos(mx))/2
+        const m = this.N / 2;
+        let firstTerm = (coefficients.a[0] + coefficients.a[m] * Math.cos(m * x)) / 2;
+
+        // Summation: Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
+        let sum = 0;
+        for (let k = 1; k < m; k++) {
+            sum += coefficients.a[k] * Math.cos(k * x) + coefficients.b[k] * Math.sin(k * x);
         }
-        
-        // Add the last cosine term (k = N/2)
-        sum += (coefficients.a[this.N / 2] * Math.cos((this.N / 2) * x)) / 2;  // Last term is halved
-        
-        return sum;
+
+        return firstTerm + sum;
     }
 
     // Helper method to compute FFT of a function
@@ -166,7 +169,7 @@ class FFT {
         const points = this.generatePoints(funcStr);
         const spectrum = this.butterflyCompute(points.y);
         const coefficients = this.extractCoefficients(spectrum);
-        
+
         return {
             spectrum,
             coefficients,
@@ -177,13 +180,13 @@ class FFT {
     generateInterpolatedPoints(coefficients) {
         const x = new Array(this.N);
         const y = new Array(this.N);
-        
+
         for (let j = 0; j < this.N; j++) {
             x[j] = -Math.PI + (2 * Math.PI * j) / this.N;
             // Store as Complex number for consistency with generatePoints()
             y[j] = new Complex(this.evaluateSeries(coefficients, x[j]));
         }
-        
+
         return { x, y };
     }
 }
