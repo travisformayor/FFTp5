@@ -33,7 +33,8 @@ function setup() {
 
   // Function input field
   let input = createInput(functionInput);
-  input.position(10, height + 10);
+  input.position(layout.input.x + 1, layout.input.y + 1);
+  input.size(layout.input.w - 9, layout.input.h - 7);
   input.input(() => {
     functionInput = input.value();
   });
@@ -42,47 +43,51 @@ function setup() {
 function draw() {
   background(225);
 
-  // Draw each section's outline
-  noFill();
-  for (const section in layout) {
-    rect(layout[section].x, layout[section].y, layout[section].w, layout[section].h);
-  }
-
   try {
     // Compute FFT and get coefficients
     const result = fft.computeFunction(functionInput);
 
-    // Draw each section using layout positions
-    drawFunction(result.points, 'Original');
-    drawInterpolated(result.coefficients, 'Interpolated');
+    // Draw original function
+    drawFunction(result.points, layout.original, 'Original', [0, 0, 255]);
+
+    // Draw interpolated function
+    const interpolatedPoints = fft.generateInterpolatedPoints(result.coefficients);
+    drawFunction(interpolatedPoints, layout.interpolated, 'Interpolated', [0, 255, 0]);
+
     drawSpectrum(result.spectrum, result.coefficients);
     drawCoefficients(result.coefficients, 'Coefficients');
 
   } catch (e) {
     // Display errors in body section
-    textSize(16);
+    textSize(18);
     fill(255, 0, 0);
-    text(e.message, layout.body.x, layout.body.y + 20);
+    noStroke();
+    text(e.message, layout.original.x + 20, layout.original.y + 20);
+  }
+
+  // Draw each section's outline
+  noFill();
+  stroke(0);
+  for (const section in layout) {
+    rect(layout[section].x, layout[section].y, layout[section].w, layout[section].h);
   }
 }
 
-function drawFunction(points, label) {
-  const section = layout.original;
-  
+function drawFunction(points, section, label, color = [0, 0, 255]) {
   // Draw axes
   stroke(0);
-  line(section.x, section.y + section.h/2, section.x + section.w, section.y + section.h/2);  // x-axis
-  line(section.x + section.w/2, section.y, section.x + section.w/2, section.y + section.h);   // y-axis
+  line(section.x, section.y + section.h / 2, section.x + section.w, section.y + section.h / 2);  // x-axis
+  line(section.x + section.w / 2, section.y, section.x + section.w / 2, section.y + section.h);   // y-axis
 
   // Draw function
-  stroke(0, 0, 255);
+  stroke(...color);
   noFill();
   beginShape();
   for (let i = 0; i < points.x.length; i++) {
     // Map x from [-π, π] to [0, width]
-    let x = map(points.x[i], -Math.PI, Math.PI, section.x, section.x + section.w);
+    const x = map(points.x[i], -Math.PI, Math.PI, section.x, section.x + section.w);
     // Map y using real part of complex number
-    let y = map(points.y[i].re, -3, 3, section.y + section.h, section.y);
+    const y = map(points.y[i].re, -3, 3, section.y + section.h, section.y);
     vertex(x, y);
   }
   endShape();
@@ -97,11 +102,11 @@ function drawFunction(points, label) {
 
 function drawSpectrum(spectrum, coefficients) {
   const section = layout.spectrum;
-  
+
   // Draw axes
   stroke(0);
-  line(section.x, section.y + section.h/2, section.x + section.w, section.y + section.h/2);  // x-axis (moved up)
-  line(section.x + section.w/2, section.y, section.x + section.w/2, section.y + section.h);   // y-axis
+  line(section.x, section.y + section.h / 2, section.x + section.w, section.y + section.h / 2);  // x-axis (moved up)
+  line(section.x + section.w / 2, section.y, section.x + section.w / 2, section.y + section.h);   // y-axis
 
   // Draw magnitude spectrum
   stroke(255, 0, 0);
@@ -113,7 +118,7 @@ function drawSpectrum(spectrum, coefficients) {
     const barHeight = map(magnitude, 0, N / 2, 0, section.h);
 
     fill(255, 0, 0, 150);
-    rect(i * barWidth, section.y + section.h/2,
+    rect(i * barWidth, section.y,
       barWidth - 2, -barHeight);
 
     // Add frequency labels
@@ -121,55 +126,15 @@ function drawSpectrum(spectrum, coefficients) {
     noStroke();
     textAlign(CENTER);
     textSize(12);
-    text(i, i * barWidth + barWidth / 2, section.y + section.h/2 + 15);
-
-    // Show coefficient values under frequency bars
-    textAlign(LEFT);
-    if (i <= N / 2) {
-      // show a coefficients for all i values
-      text(`a${i}=${coefficients.a[i].toFixed(3)}`,
-        i * barWidth * 2.5 + 10, section.y + 20);
-      if (i !== 0 && i !== N / 2) {
-        // show b coefficients for all i except 0 and N/2
-        text(`b${i}=${coefficients.b[i].toFixed(3)}`,
-          i * barWidth * 2.5 + 10, section.y + 40);
-      }
-    }
+    text(i, i * barWidth + barWidth / 2, section.y + 15);
   }
-}
-
-function drawInterpolated(coefficients, label) {
-  const section = layout.interpolated;
-  
-  // Draw axes
-  stroke(0);
-  line(section.x, section.y + section.h/2, section.x + section.w, section.y + section.h/2);  // x-axis
-  line(section.x + section.w/2, section.y, section.x + section.w/2, section.y + section.h);   // y-axis
-
-  // Draw label
-  noStroke();
-  fill(0);
-  textSize(16);
-  textAlign(LEFT);
-  text(label, section.x + 10, section.y + 20);
-
-  // Draw interpolated function
-  stroke(0, 255, 0);
-  noFill();
-  beginShape();
-  for (let i = 0; i < section.w; i++) {
-    const x = map(i, 0, section.w, -Math.PI, Math.PI);
-    const y = fft.evaluateSeries(coefficients, x);
-    vertex(i, map(y, -3, 3, section.y + section.h, section.y));
-  }
-  endShape();
 }
 
 function drawCoefficients(coefficients, label) {
   const section = layout.coefficients;
   const padding = 20;
   const lineHeight = 20;
-  
+
   // Draw label
   noStroke();
   fill(0);
@@ -180,22 +145,19 @@ function drawCoefficients(coefficients, label) {
   // Column headers
   textSize(14);
   const colWidth = (section.w - (padding * 3)) / 2;
-  text("a coefficients", section.x + padding, section.y + 40);
-  text("b coefficients", section.x + padding * 2 + colWidth, section.y + 40);
-
   // Draw coefficients
   textSize(12);
-  for (let i = 0; i <= N/2; i++) {
+  for (let i = 0; i <= N / 2; i++) {
     // a coefficients
     text(`a${i} = ${coefficients.a[i].toFixed(4)}`,
       section.x + padding,
-      section.y + 60 + (i * lineHeight));
-    
+      section.y + 40 + (i * lineHeight));
+
     // b coefficients (skip b₀ and b_{N/2})
-    if (i !== 0 && i !== N/2) {
+    if (i !== 0 && i !== N / 2) {
       text(`b${i} = ${coefficients.b[i].toFixed(4)}`,
         section.x + padding * 2 + colWidth,
-        section.y + 60 + (i * lineHeight));
+        section.y + 40 + (i * lineHeight));
     }
   }
 }

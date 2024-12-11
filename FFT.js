@@ -173,4 +173,17 @@ class FFT {
             points
         };
     }
+
+    generateInterpolatedPoints(coefficients) {
+        const x = new Array(this.N);
+        const y = new Array(this.N);
+        
+        for (let j = 0; j < this.N; j++) {
+            x[j] = -Math.PI + (2 * Math.PI * j) / this.N;
+            // Store as Complex number for consistency with generatePoints()
+            y[j] = new Complex(this.evaluateSeries(coefficients, x[j]));
+        }
+        
+        return { x, y };
+    }
 }
