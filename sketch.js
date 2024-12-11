@@ -214,7 +214,12 @@ function testFFT() {
   totalTests++;
   const fft8 = new FFT(8);
   const stage1Pairs = fft8.getButterflyPairs(1, 8);
-  const expectedStage1 = [[0, 4], [1, 5], [2, 6], [3, 7]];
+  const expectedStage1 = [
+    { pair: [0, 4], k: 0, distance: 4 },
+    { pair: [1, 5], k: 1, distance: 4 },
+    { pair: [2, 6], k: 2, distance: 4 },
+    { pair: [3, 7], k: 3, distance: 4 }
+  ];
   if (JSON.stringify(stage1Pairs) === JSON.stringify(expectedStage1)) {
     console.log("✅ Passed: Stage 1 butterfly pairs correct");
     testsPassed++;
@@ -226,7 +231,12 @@ function testFFT() {
 
   totalTests++;
   const stage2Pairs = fft8.getButterflyPairs(2, 8);
-  const expectedStage2 = [[0, 2], [1, 3], [4, 6], [5, 7]];
+  const expectedStage2 = [
+    { pair: [0, 2], k: 0, distance: 2 },
+    { pair: [1, 3], k: 1, distance: 2 },
+    { pair: [4, 6], k: 2, distance: 2 },
+    { pair: [5, 7], k: 3, distance: 2 }
+  ];
   if (JSON.stringify(stage2Pairs) === JSON.stringify(expectedStage2)) {
     console.log("✅ Passed: Stage 2 butterfly pairs correct");
     testsPassed++;
@@ -238,7 +248,12 @@ function testFFT() {
 
   totalTests++;
   const stage3Pairs = fft8.getButterflyPairs(3, 8);
-  const expectedStage3 = [[0, 1], [2, 3], [4, 5], [6, 7]];
+  const expectedStage3 = [
+    { pair: [0, 1], k: 0, distance: 1 },
+    { pair: [2, 3], k: 1, distance: 1 },
+    { pair: [4, 5], k: 2, distance: 1 },
+    { pair: [6, 7], k: 3, distance: 1 }
+  ];
   if (JSON.stringify(stage3Pairs) === JSON.stringify(expectedStage3)) {
     console.log("✅ Passed: Stage 3 butterfly pairs correct");
     testsPassed++;

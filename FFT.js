@@ -81,18 +81,21 @@ class FFT {
 
     // Select the correct pairs for each butterfly round
     getButterflyPairs(stage, N) {
-        // For stage 1, we want the largest butterfly size
-        // For the last stage, we want the smallest
-        const numStages = Math.log2(N);
-        const butterflySize = 1 << (numStages - stage + 1);
-        const halfSize = butterflySize >> 1;
+        const distance = N / Math.pow(2, stage); // Distance between pairs decreases with each stage
         const pairs = [];
 
-        for (let j = 0; j < N; j += butterflySize) {
-            for (let k = 0; k < halfSize; k++) {
-                const evenIndex = j + k;
-                const oddIndex = j + k + halfSize;
-                pairs.push([evenIndex, oddIndex]);
+        // Outer loop: jump by distance*2 to handle next group
+        for (let j = 0; j < N; j += distance * 2) {
+            // Inner loop: generate pairs within current group
+            for (let k = 0; k < distance; k++) {
+                const evenIndex = j + k;           // First element in pair
+                const oddIndex = j + k + distance; // Second element in pair
+
+                pairs.push({
+                    pair: [evenIndex, oddIndex],
+                    k: evenIndex,
+                    distance: distance
+                });
             }
         }
 
@@ -101,7 +104,7 @@ class FFT {
 
     // Retrieve the correct twiddle factor, with looping
     getTwiddleFactor(k, butterflySize, N) {
-        const twiddleIndex = (k * N) / butterflySize;
+        const twiddleIndex = (k * N) / (2 * butterflySize);
         return this.W[twiddleIndex % (N / 2)];
     }
 
@@ -131,16 +134,14 @@ class FFT {
 
         // Butterfly computation
         for (let stage = 1; stage <= Math.log2(this.N); stage++) {
-            const butterflySize = 1 << stage;
-            const halfSize = butterflySize >> 1;
             const pairs = this.getButterflyPairs(stage, this.N);
 
-            for (const [evenIndex, oddIndex] of pairs) {
+            for (const { pair: [evenIndex, oddIndex], k, distance } of pairs) {
                 const even = X[evenIndex];
                 const odd = X[oddIndex];
-                const k = evenIndex % halfSize;
+                console.log(evenIndex, oddIndex, k, distance);
 
-                const twiddle = this.getTwiddleFactor(k, butterflySize, this.N);
+                const twiddle = this.getTwiddleFactor(k, distance, this.N);
                 const product = Complex.multiply(odd, twiddle);
                 X[evenIndex] = Complex.add(even, product);
                 X[oddIndex] = Complex.subtract(even, product);
