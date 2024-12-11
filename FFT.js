@@ -79,9 +79,35 @@ class FFT {
         return { x, y };
     }
 
-    butterflyCompute(input) {
-        // Compute complex numbers using butterfly pairs
+    // Select the correct pairs for each butterfly round
+    getButterflyPairs(stage, N) {
+        // For stage 1, we want the largest butterfly size
+        // For the last stage, we want the smallest
+        const numStages = Math.log2(N);
+        const butterflySize = 1 << (numStages - stage + 1);
+        const halfSize = butterflySize >> 1;
+        const pairs = [];
 
+        for (let j = 0; j < N; j += butterflySize) {
+            for (let k = 0; k < halfSize; k++) {
+                const evenIndex = j + k;
+                const oddIndex = j + k + halfSize;
+                pairs.push([evenIndex, oddIndex]);
+            }
+        }
+
+        return pairs;
+    }
+
+    // Retrieve the correct twiddle factor, with looping
+    getTwiddleFactor(k, butterflySize, N) {
+        const twiddleIndex = (k * N) / butterflySize;
+        return this.W[twiddleIndex % (N / 2)];
+    }
+
+
+    // Compute complex numbers using butterfly pairs
+    butterflyCompute(input) {
         // Convert input to array of Complex numbers if necessary
         const signal = Array.isArray(input) ?
             input.map(x => typeof x === 'number' ? new Complex(x) : x) :
@@ -102,23 +128,17 @@ class FFT {
         for (let stage = 1; stage <= Math.log2(this.N); stage++) {
             const butterflySize = 1 << stage;
             const halfSize = butterflySize >> 1;
+            const pairs = this.getButterflyPairs(stage, this.N);
 
-            for (let j = 0; j < this.N; j += butterflySize) {
-                for (let k = 0; k < halfSize; k++) {
-                    const evenIndex = j + k;
-                    const oddIndex = j + k + halfSize;
-                    const even = X[evenIndex];
-                    const odd = X[oddIndex];
+            for (const [evenIndex, oddIndex] of pairs) {
+                const even = X[evenIndex];
+                const odd = X[oddIndex];
+                const k = evenIndex % halfSize;
 
-                    // twiddle = W[k * N/butterflySize]
-                    const twiddleIndex = (k * this.N) / butterflySize;
-                    const twiddle = this.W[twiddleIndex % (this.N / 2)];
-
-                    // Butterfly operation
-                    const product = Complex.multiply(odd, twiddle);
-                    X[evenIndex] = Complex.add(even, product);
-                    X[oddIndex] = Complex.subtract(even, product);
-                }
+                const twiddle = this.getTwiddleFactor(k, butterflySize, this.N);
+                const product = Complex.multiply(odd, twiddle);
+                X[evenIndex] = Complex.add(even, product);
+                X[oddIndex] = Complex.subtract(even, product);
             }
         }
 
