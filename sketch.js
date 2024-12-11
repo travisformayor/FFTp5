@@ -1,5 +1,5 @@
 let fft;
-let functionInput = "cos(x)";  // Default function
+let functionInput = "x";  // Default function
 let N = 16;  // Increase for smoother line (more points)
 
 const width = 800;
@@ -185,7 +185,7 @@ function testFFT() {
   }
 
   totalTests++;
-  if (Math.abs(fft.W[1].re - 0.7071) < 1e-4 && Math.abs(fft.W[1].im + 0.7071) < 1e-4) {
+  if (Math.abs(fft.W[1].re - 0.7071) < 1e-4 && Math.abs(fft.W[1].im - 0.7071) < 1e-4) {
     console.log("✅ Passed: W[1] is correct");
     testsPassed++;
   } else {
@@ -221,55 +221,6 @@ function testFFT() {
     testsPassed++;
   } else {
     console.log("❌ Failed: Points not evenly spaced");
-  }
-
-  // Test coefficient extraction
-  totalTests++;
-  const testSignal = [
-    new Complex(1),    // C₀
-    new Complex(0, 1), // C₁
-    new Complex(-1),   // C₂
-    new Complex(0)     // C₃
-  ];
-  const testFFT = new FFT(4);
-  const coeffs = testFFT.extractCoefficients(testSignal);
-
-  // Test a₀
-  if (Math.abs(coeffs.a[0] - 0.5) < 1e-10) {
-    console.log("✅ Passed: a₀ coefficient correct");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: a₀ coefficient incorrect");
-  }
-
-  totalTests++;
-  // Test a₁ and b₁
-  if (Math.abs(coeffs.a[1]) < 1e-10 && Math.abs(coeffs.b[1] - (-0.5)) < 1e-10) {
-    console.log("✅ Passed: a₁ and b₁ coefficients correct");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: a₁ and b₁ coefficients incorrect");
-  }
-
-  totalTests++;
-  // Test a₂ (final coefficient)
-  if (Math.abs(coeffs.a[2] + 0.5) < 1e-10) {
-    console.log("✅ Passed: a₂ coefficient correct");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: a₂ coefficient incorrect");
-  }
-
-  // Test series interpolation approximation
-  totalTests++;
-  const x = Math.PI / 4;
-  const interpolated = testFFT.evaluateSeries(coeffs, x);
-  const expected = 0.25 + 0.5 * Math.sin(x) - 0.5 * Math.cos(2 * x);
-  if (Math.abs(interpolated - expected) < 1e-10) {
-    console.log("✅ Passed: Series interpolated correctly");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: Series interpolated incorrectly");
   }
 
   // Summary

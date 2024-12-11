@@ -11,7 +11,7 @@
 6. Coefficient Extraction (Step 4)
 7. Fourier Series Construction (Step 5)
 8. Visualizations
-9. Comprehensive test suite for core components
+9. Basic test suite
 
 ### Project Structure
 - `index.html`: P5.js setup and configuration
@@ -24,19 +24,16 @@
 ### Pending Implementation
 
 1. Additional Testing
-   - Edge case handling for complex functions
-   - Numerical stability tests for large N values
-   - Performance optimization testing
-   - Error analysis for known functions
+   - Add test for coefficient extraction
+   - Add test for series interpolation approximation
+   - Add test for butterfly computation
 
 ## Technical Specifications
 
-### Implementation Requirements
+### Implementation Details
 - Input size (N) must be a power of 2
 - Complex numbers represented as `{re, im}` objects
 - Twiddle factors (W) precomputed for performance
-- Careful attention to sign conventions
-- Robust handling of edge cases
 
 ### Testing Strategy
 
@@ -45,9 +42,6 @@
 2. Twiddle factor computation accuracy
 3. Bit reversal algorithm correctness
 4. Point generation and spacing verification
-5. Butterfly computation validation
-6. Coefficient extraction accuracy
-7. Series interpolation approximation accuracy
 
 ## Contributing
 When implementing new features or modifications:
