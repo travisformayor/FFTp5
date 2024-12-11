@@ -61,6 +61,7 @@ function draw() {
     const interpolatedPoints = fft.generateInterpolatedPoints(result.coefficients);
     drawFunction(interpolatedPoints, layout.interpolated, 'Interpolated', [0, 255, 0]);
 
+    // Draw spectrum and coefficients
     drawSpectrum(result.spectrum, result.coefficients);
     drawCoefficients(result.coefficients, 'Coefficients');
 
@@ -108,7 +109,6 @@ function drawSpectrum(spectrum, coefficients) {
   stroke(255, 0, 0);
   const barWidth = section.w / spectrum.length;
 
-  // Draw spectrum bars and coefficients
   for (let i = 0; i < spectrum.length; i++) {
     const magnitude = Complex.magnitude(spectrum[i]);
     const barHeight = map(magnitude, 0, N, 0, section.h);
@@ -173,11 +173,9 @@ function testFFT() {
     testsPassed++;
   }
 
-  // Use N = 8 for all remaining tests
-  const fft8 = new FFT(8);
-
   // Test bit reversal application
   totalTests++;
+  let fft8 = new FFT(8);
   const testSignal = [1, 2, 3, 4, 5, 6, 7, 8].map(x => new Complex(x));
   const reversedSignal = fft8.applyBitReversal(testSignal);
   const expectedOrder = [1, 5, 3, 7, 2, 6, 4, 8];
@@ -195,6 +193,7 @@ function testFFT() {
 
   // Test point generation
   totalTests++;
+  fft8 = new FFT(8); // reset fft8 for new test
   const points = fft8.generatePoints("pi(pi-x)");
   if (points.x.length === 8) {
     console.log("✅ Passed: Point count is correct");
@@ -213,6 +212,7 @@ function testFFT() {
 
   // Test butterfly pair generation
   totalTests++;
+  fft8 = new FFT(8); // reset fft8 for new test
   const stage1Pairs = fft8.getButterflyPairs(1, 8);
   const expectedStage1 = [
     { pair: [0, 1], k: 0, distance: 1 },
@@ -265,8 +265,9 @@ function testFFT() {
   }
 
   // Test twiddle factors
-  function testTwiddleFactor(k, butterflySize, N, expected, tolerance = 1e-3) {
-    const twiddle = fft8.getTwiddleFactor(k, butterflySize, N);
+  fft8 = new FFT(8); // reset fft8 for new test
+  function testTwiddleFactor(k, distance, N, expected, tolerance = 1e-3) {
+    const twiddle = fft8.getTwiddleFactor(k, distance, N);
     const reOk = Math.abs(twiddle.re - expected.re) < tolerance;
     const imOk = Math.abs(twiddle.im - expected.im) < tolerance;
     return {
@@ -291,14 +292,14 @@ function testFFT() {
 
   twiddle_tests.forEach(test => {
     totalTests++;
-    const result = testTwiddleFactor(test.k, test.k, 8, test.expected);
+    const result = testTwiddleFactor(test.k, 4, 8, test.expected);
     if (result.passed) {
       console.log(`✅ Passed: Twiddle factor W^${test.k} correct`);
       testsPassed++;
     } else {
       console.log(`❌ Failed: Twiddle factor W^${test.k} incorrect`);
       console.log("Expected:", test.expected);
-      console.log("Got:", result.got);
+      console.log("Got:", JSON.stringify(result.got));
     }
   });
 

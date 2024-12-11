@@ -55,6 +55,7 @@ class FFT {
         const x = new Array(this.N);
         const y = new Array(this.N);
 
+        // Generate points
         for (let j = 0; j < this.N; j++) {
             x[j] = -Math.PI + (2 * Math.PI * j) / (this.N);
             // Store as Complex number (just first param, so real part only)
@@ -66,13 +67,14 @@ class FFT {
 
     // Select the correct pairs for each butterfly round
     getButterflyPairs(stage, N) {
+        // Distance between pairs starts low and increases with each stage
         // const distance = N / Math.pow(2, stage); // Distance between pairs decreases with each stage
         const distance = Math.pow(2, stage - 1); // Distance between pairs increases with each stage
         const pairs = [];
 
-        // Outer loop: jump by distance*2 to handle next group
+        // Outer loop: process each group
         for (let j = 0; j < N; j += distance * 2) {
-            // Inner loop: generate pairs within current group
+            // Inner loop: process pairs within group
             for (let k = 0; k < distance; k++) {
                 const evenIndex = j + k;           // First element in pair
                 const oddIndex = j + k + distance; // Second element in pair
@@ -90,9 +92,9 @@ class FFT {
 
     // Retrieve the correct twiddle factor
     getTwiddleFactor(k, distance, N) {
+        // W_N^k = e^(-2πik/N) for k-th frequency at current stage
         // todo: add caching here
-        const stageK = k * (N / (distance * 2));  // k scaling
-
+        const stageK = k * (N / (2 * distance));  // find twiddle factor index
         return this.W(stageK, N);
     }
 
@@ -120,7 +122,6 @@ class FFT {
         return W_k;
     }
 
-    // Add new method to expose bit reversal operation
     applyBitReversal(signal) {
         const X = new Array(this.N);
         for (let i = 0; i < this.N; i++) {
@@ -136,7 +137,7 @@ class FFT {
             throw new Error(`Input length must be ${this.N}`);
         }
 
-        // Use the exposed method for bit reversal
+        // Start with bit-reversed input
         const X = this.applyBitReversal(input);
 
         // Butterfly computation
@@ -178,27 +179,9 @@ class FFT {
         }
 
         // End case: aN/2
-        coefficients.a[this.N / 2] = (2 / this.N) * complexValues[this.N / 2].re;
+        coefficients.a[this.N / 2] = (1 / this.N) * complexValues[this.N / 2].re;
 
         return coefficients;
-    }
-
-    evaluateSeries(coefficients, x) {
-        // Implementation of:
-        // S_m(x) = ((a_0 + a_m*cos(mx))/2) + Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
-        // where m = N/2 (maximum degree)
-
-        // First term: (a_0 + a_m*cos(mx))/2
-        const m = this.N / 2;
-        let firstTerm = (coefficients.a[0] + coefficients.a[m] * Math.cos(m * x)) / 2;
-
-        // Summation: Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
-        let sum = 0;
-        for (let k = 1; k < m; k++) {
-            sum += coefficients.a[k] * Math.cos(k * x) + coefficients.b[k] * Math.sin(k * x);
-        }
-
-        return firstTerm + sum;
     }
 
     // Helper method to compute FFT of a function
@@ -219,9 +202,22 @@ class FFT {
         const y = new Array(this.N);
 
         for (let j = 0; j < this.N; j++) {
-            x[j] = -Math.PI + (2 * Math.PI * j) / (this.N);
-            // Store as Complex number for consistency with generatePoints()
-            y[j] = new Complex(this.evaluateSeries(coefficients, x[j]));
+            x[j] = -Math.PI + (2 * Math.PI * j) / (this.N - 1);
+
+            // Implementation of:
+            // S_m(x) = ((a_0 + a_m*cos(mx))/2) + Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
+            const m = this.N / 2; // maximum degree
+
+            //  First term: ((a_0 + a_m*cos(mx))/2)
+            let sum = (coefficients.a[0] + (coefficients.a[m] * Math.cos(m * x[j]))) / 2;
+
+            // Sum terms: sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
+            for (let k = 1; k < m; k++) {
+                sum += coefficients.a[k] * Math.cos(k * x[j]) +
+                    coefficients.b[k] * Math.sin(k * x[j]);
+            }
+
+            y[j] = new Complex(sum);
         }
 
         return { x, y };
