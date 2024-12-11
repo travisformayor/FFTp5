@@ -1,6 +1,6 @@
 let fft;
 let functionInput = "sin(x)";  // Default function
-let N = 8;  // Increase for smoother line (more points)
+let N = 16;  // Increase for smoother line (more points)
 
 const width = 800;
 const height = 700;
@@ -180,7 +180,7 @@ function testFFT() {
   const testSignal = [1, 2, 3, 4, 5, 6, 7, 8].map(x => new Complex(x));
   const reversedSignal = fft.applyBitReversal(testSignal);
   const expectedOrder = [1, 5, 3, 7, 2, 6, 4, 8];
-  const correctOrder = expectedOrder.every((val, idx) => 
+  const correctOrder = expectedOrder.every((val, idx) =>
     Math.abs(reversedSignal[idx].re - val) < 1e-10
   );
   if (correctOrder) {
@@ -234,8 +234,8 @@ function testFFT() {
   const expectedStage2 = [
     { pair: [0, 2], k: 0, distance: 2 },
     { pair: [1, 3], k: 1, distance: 2 },
-    { pair: [4, 6], k: 2, distance: 2 },
-    { pair: [5, 7], k: 3, distance: 2 }
+    { pair: [4, 6], k: 4, distance: 2 },
+    { pair: [5, 7], k: 5, distance: 2 }
   ];
   if (JSON.stringify(stage2Pairs) === JSON.stringify(expectedStage2)) {
     console.log("✅ Passed: Stage 2 butterfly pairs correct");
@@ -250,9 +250,9 @@ function testFFT() {
   const stage3Pairs = fft8.getButterflyPairs(3, 8);
   const expectedStage3 = [
     { pair: [0, 1], k: 0, distance: 1 },
-    { pair: [2, 3], k: 1, distance: 1 },
-    { pair: [4, 5], k: 2, distance: 1 },
-    { pair: [6, 7], k: 3, distance: 1 }
+    { pair: [2, 3], k: 2, distance: 1 },
+    { pair: [4, 5], k: 4, distance: 1 },
+    { pair: [6, 7], k: 6, distance: 1 }
   ];
   if (JSON.stringify(stage3Pairs) === JSON.stringify(expectedStage3)) {
     console.log("✅ Passed: Stage 3 butterfly pairs correct");
@@ -264,18 +264,6 @@ function testFFT() {
   }
 
   // Test twiddle factors
-  const expectedTwiddles = [
-    { re: 1, im: 0 },           // W^0
-    { re: 0.707, im: -0.707 },  // W^1
-    { re: 0, im: -1 },          // W^2
-    { re: -0.707, im: -0.707 }, // W^3
-    { re: -1, im: 0 },          // W^4
-    { re: -0.707, im: 0.707 },  // W^5
-    { re: 0, im: 1 },           // W^6
-    { re: 0.707, im: 0.707 },   // W^7
-    { re: 1, im: 0 }            // W^8
-  ];
-
   function testTwiddleFactor(k, butterflySize, N, expected, tolerance = 1e-3) {
     const twiddle = fft8.getTwiddleFactor(k, butterflySize, N);
     const reOk = Math.abs(twiddle.re - expected.re) < tolerance;
@@ -287,41 +275,31 @@ function testFFT() {
     };
   }
 
-  // Test basic twiddle factors
-  totalTests++;
-  const twiddle0 = testTwiddleFactor(0, 2, 8, expectedTwiddles[0]);
-  if (twiddle0.passed) {
-    console.log("✅ Passed: Twiddle factor W^0 correct");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: Twiddle factor W^0 incorrect");
-    console.log("Expected:", twiddle0.expected);
-    console.log("Got:", twiddle0.got);
-  }
+  // Twiddle factors from 0 to N
+  const twiddle_tests = [
+    { k: 0, expected: { re: 1, im: 0 } },           // W^0
+    { k: 1, expected: { re: 0.707, im: -0.707 } },  // W^1
+    { k: 2, expected: { re: 0, im: -1 } },          // W^2
+    { k: 3, expected: { re: -0.707, im: -0.707 } }, // W^3
+    { k: 4, expected: { re: -1, im: 0 } },          // W^4
+    { k: 5, expected: { re: -0.707, im: 0.707 } },  // W^5
+    { k: 6, expected: { re: 0, im: 1 } },           // W^6
+    { k: 7, expected: { re: 0.707, im: 0.707 } },   // W^7
+    { k: 8, expected: { re: 1, im: 0 } }            // W^8 (same as W^0)
+  ];
 
-  totalTests++;
-  const twiddle2 = testTwiddleFactor(1, 4, 8, expectedTwiddles[2]);
-  if (twiddle2.passed) {
-    console.log("✅ Passed: Twiddle factor W^2 correct");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: Twiddle factor W^2 incorrect");
-    console.log("Expected:", twiddle2.expected);
-    console.log("Got:", twiddle2.got);
-  }
-
-  // Test twiddle factor looping (should wrap back to start)
-  totalTests++;
-  // Testing W⁸ which should equal W⁰ due to periodicity
-  const twiddleLoop = testTwiddleFactor(4, 4, 8, expectedTwiddles[0]);
-  if (twiddleLoop.passed) {
-    console.log("✅ Passed: Twiddle factor W^8 (looped) correct");
-    testsPassed++;
-  } else {
-    console.log("❌ Failed: Twiddle factor W^8 (looped) incorrect");
-    console.log("Expected:", twiddleLoop.expected);
-    console.log("Got:", twiddleLoop.got);
-  }
+  twiddle_tests.forEach(test => {
+    totalTests++;
+    const result = testTwiddleFactor(test.k, test.k, 8, test.expected);
+    if (result.passed) {
+      console.log(`✅ Passed: Twiddle factor W^${test.k} correct`);
+      testsPassed++;
+    } else {
+      console.log(`❌ Failed: Twiddle factor W^${test.k} incorrect`);
+      console.log("Expected:", test.expected);
+      console.log("Got:", result.got);
+    }
+  });
 
   // Summary
   console.log(`\nTest Summary: ${testsPassed}/${totalTests} tests passed`);

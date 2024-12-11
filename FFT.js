@@ -2,7 +2,7 @@ class FFT {
     constructor(N) {
         this.validateN(N);
         this.N = N;
-        this.W = this.precomputeTwiddles();
+        // todo: catch computed twiddles in this.W
         this.bitReverseLookup = this.createBitReverseLookup();
     }
 
@@ -10,21 +10,6 @@ class FFT {
         if (N <= 0 || (N & (N - 1)) !== 0) {
             throw new Error('N must be a positive power of 2');
         }
-    }
-
-    precomputeTwiddles() {
-        const W = new Array(this.N / 2);
-
-        // Following document formula: W_k = e^(-2πik/N) = cos(2πk/N) - i*sin(2πk/N)
-        for (let k = 0; k < this.N / 2; k++) {
-            const angle = (2 * Math.PI * k) / this.N;
-            W[k] = new Complex(
-                Math.cos(angle),
-                -Math.sin(angle)
-            );
-        }
-
-        return W;
     }
 
     createBitReverseLookup() {
@@ -102,10 +87,34 @@ class FFT {
         return pairs;
     }
 
-    // Retrieve the correct twiddle factor, with looping
+    // Retrieve the correct twiddle factor
     getTwiddleFactor(k, butterflySize, N) {
-        const twiddleIndex = (k * N) / (2 * butterflySize);
-        return this.W[twiddleIndex % (N / 2)];
+        // todo: add caching here
+        return this.W(k, N);
+    }
+
+    // Return the twiddle factor for k and N, with looping
+    W(k, N) {
+        // formula: W_k = e^{-2*pi*i*k/N} = cos(2*pi*k/N) - i*sin(2*pi*k/N)
+
+        // First, normalize k to be within [0, N)
+        const normalizedK = k % N;
+
+        // Then get the base index in [0, N/2) range
+        const baseK = normalizedK % (N / 2);
+
+        // Determine if in negative half of unit circle
+        const isNegative = normalizedK >= N / 2;
+        const loopMod = isNegative ? -1 : 1;
+
+        // Calculate the base twiddle factor
+        const angle = (2 * Math.PI * baseK) / N;
+        const W_k = new Complex(
+            Math.cos(angle) * loopMod,
+            -Math.sin(angle) * loopMod
+        );
+
+        return W_k;
     }
 
     // Add new method to expose bit reversal operation
@@ -139,7 +148,6 @@ class FFT {
             for (const { pair: [evenIndex, oddIndex], k, distance } of pairs) {
                 const even = X[evenIndex];
                 const odd = X[oddIndex];
-                console.log(evenIndex, oddIndex, k, distance);
 
                 const twiddle = this.getTwiddleFactor(k, distance, this.N);
                 const product = Complex.multiply(odd, twiddle);
