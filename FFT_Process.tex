@@ -34,7 +34,6 @@ For data points $(x_j,y_j)$ on $[-\pi,\pi]$:
 \\
 Note: Only need to compute each $W_k$ once.\\
 Note: $W$ values "loop" around a unit circle for higher values.\\
-\\
 \begin{align*}
 \text{ex: } N=8&, \text{with } \log_2(8)= 3: \\
 W_0 &= e^{2\pi i(0)/8} = 1.0000+0.0000i &(0^\circ)\\
@@ -112,8 +111,8 @@ C_{k+d} &= C_k - \eta
 
 \section*{Step 4) Coefficient Extraction}
 Convert complex values to $a_k$ and $b_k$ values:
-\[a_0 = \frac{2}{N}Re(C_0)\]
-\[a_k = \frac{2}{N}Re(C_k) \quad \quad b_k = -\frac{2}{N}Im(C_k), \quad \text{for } k=1,2,\ldots,(N/2)-1\]
+\[a_0 = \frac{1}{N}Re(C_0)\]
+\[a_k = \frac{2}{N}Re(C_k) \quad \quad b_k = \frac{2}{N}Im(C_k), \quad \text{for } k=1,2,\ldots,(N/2)-1\]
 \[a_{N/2} = \frac{2}{N}Re(C_{N/2}), \quad \text{for } k = N/2\]
 
 \section*{Step 5) Construct Fourier series approximation}

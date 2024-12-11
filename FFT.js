@@ -15,7 +15,7 @@ class FFT {
     precomputeTwiddles() {
         const W = new Array(this.N / 2);
 
-        // Following document formula: W_k = e^(-2πik/N) = cos(2πk/N) - i*sin(2πk/N)
+        // Following document formula: W_k = e^(2πik/N) = cos(2πk/N) + i*sin(2πk/N)
         for (let k = 0; k < this.N / 2; k++) {
             const angle = (2 * Math.PI * k) / this.N;
             W[k] = new Complex(
@@ -71,7 +71,7 @@ class FFT {
         const y = new Array(this.N);
 
         for (let j = 0; j < this.N; j++) {
-            x[j] = -Math.PI + (2 * Math.PI * j) / this.N;
+            x[j] = -Math.PI + (2 * Math.PI * j) / (this.N);
             // Store as Complex number (just first param, so real part only)
             y[j] = new Complex(this.evaluateFunction(funcStr, x[j]));
         }
@@ -131,16 +131,16 @@ class FFT {
             b: new Array(this.N / 2).fill(0)
         };
 
-        // Special case: a0
-        coefficients.a[0] = (2 / this.N) * complexValues[0].re;
+        // Start case: a0
+        coefficients.a[0] = (1 / this.N) * complexValues[0].re;
 
         // General cases: ak and bk
         for (let k = 1; k < this.N / 2; k++) {
             coefficients.a[k] = (2 / this.N) * complexValues[k].re;
-            coefficients.b[k] = -(2 / this.N) * complexValues[k].im;
+            coefficients.b[k] = (2 / this.N) * complexValues[k].im;
         }
 
-        // Special case: aN/2
+        // End case: aN/2
         coefficients.a[this.N / 2] = (2 / this.N) * complexValues[this.N / 2].re;
 
         return coefficients;
@@ -148,7 +148,7 @@ class FFT {
 
     evaluateSeries(coefficients, x) {
         // Implementation of:
-        // S_m(x) = (a_0 + a_m*cos(mx))/2 + Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
+        // S_m(x) = ((a_0 + a_m*cos(mx))/2) + Sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
         // where m = N/2 (maximum degree)
 
         // First term: (a_0 + a_m*cos(mx))/2
@@ -182,7 +182,7 @@ class FFT {
         const y = new Array(this.N);
 
         for (let j = 0; j < this.N; j++) {
-            x[j] = -Math.PI + (2 * Math.PI * j) / this.N;
+            x[j] = -Math.PI + (2 * Math.PI * j) / (this.N);
             // Store as Complex number for consistency with generatePoints()
             y[j] = new Complex(this.evaluateSeries(coefficients, x[j]));
         }
