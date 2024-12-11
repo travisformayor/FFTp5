@@ -38,7 +38,7 @@
 
 4. Additional Testing
    - Coefficient extraction validation
-   - Series reconstruction accuracy
+   - Series interpolation approximation accuracy
    - Error analysis for known functions
    - Edge case handling
 
@@ -62,7 +62,7 @@
 
 #### Planned Test Cases
 1. Coefficient extraction accuracy
-2. Series reconstruction fidelity
+2. Series interpolation approximation accuracy
 3. Known function transformations
 4. Edge case handling
 5. Numerical stability tests

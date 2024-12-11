@@ -1,13 +1,37 @@
 let fft;
 let functionInput = "sin(x)";  // Default function
-let N = 32;  // Increased from 8 for better visualization
+let N = 16;  // Increase for smoother line (more points)
+
+const width = 800;
+const height = 700;
+
+// Layout section positions. x and y are top left corner
+const buffer = 10;
+const input = { h: 25, w: 200 };
+const spectrum = { h: 40 };
+const body = { w: (width - (buffer * 2) - (width / 4)) };
+const graph = {
+  h: (height - input.h - (buffer * 4) - spectrum.h) / 2,
+  w: body.w,
+};
+const coeffsBox = {
+  h: (graph.h * 2) + buffer + spectrum.h,
+  w: width - body.w - (buffer * 3)
+};
+const layout = {
+  input: { x: buffer, y: buffer, w: input.w, h: input.h },
+  original: { x: buffer, y: (buffer * 2) + input.h, w: graph.w, h: graph.h },
+  interpolated: { x: buffer, y: (buffer * 2) + input.h + graph.h, w: graph.w, h: graph.h },
+  spectrum: { x: buffer, y: (buffer * 3) + input.h + (graph.h * 2), w: graph.w, h: spectrum.h },
+  coefficients: { x: (buffer * 2) + graph.w, y: input.h + (buffer * 2), w: coeffsBox.w, h: coeffsBox.h },
+};
 
 function setup() {
-  createCanvas(800, 800);
+  createCanvas(width, height);
   testFFT();
   fft = new FFT(N);
 
-  // Create input field for function
+  // Function input field
   let input = createInput(functionInput);
   input.position(10, height + 10);
   input.input(() => {
@@ -16,34 +40,39 @@ function setup() {
 }
 
 function draw() {
-  background(220);
+  background(225);
+
+  // Draw each section's outline
+  noFill();
+  for (const section in layout) {
+    rect(layout[section].x, layout[section].y, layout[section].w, layout[section].h);
+  }
 
   try {
     // Compute FFT and get coefficients
     const result = fft.computeFunction(functionInput);
 
-    // Draw original function
-    drawFunction(result.points, 0, 'Original');
-
-    // Draw reconstructed function
-    drawReconstructed(result.coefficients, height / 3, 'Reconstructed');
-
-    // Draw magnitude spectrum
-    drawSpectrum(result.spectrum, 2 * height / 3, result.coefficients);
+    // Draw each section using layout positions
+    drawFunction(result.points, 'Original');
+    drawInterpolated(result.coefficients, 'Interpolated');
+    drawSpectrum(result.spectrum, result.coefficients);
+    drawCoefficients(result.coefficients, 'Coefficients');
 
   } catch (e) {
-    // Display errors
+    // Display errors in body section
     textSize(16);
     fill(255, 0, 0);
-    text(e.message, 10, 30);
+    text(e.message, layout.body.x, layout.body.y + 20);
   }
 }
 
-function drawFunction(points, yOffset, label) {
+function drawFunction(points, label) {
+  const section = layout.original;
+  
   // Draw axes
   stroke(0);
-  line(0, yOffset + height / 6, width, yOffset + height / 6);  // x-axis
-  line(width / 2, yOffset, width / 2, yOffset + height / 3);   // y-axis
+  line(section.x, section.y + section.h/2, section.x + section.w, section.y + section.h/2);  // x-axis
+  line(section.x + section.w/2, section.y, section.x + section.w/2, section.y + section.h);   // y-axis
 
   // Draw function
   stroke(0, 0, 255);
@@ -51,9 +80,9 @@ function drawFunction(points, yOffset, label) {
   beginShape();
   for (let i = 0; i < points.x.length; i++) {
     // Map x from [-π, π] to [0, width]
-    let x = map(points.x[i], -Math.PI, Math.PI, 0, width);
-    // Map y using real part of Complex number
-    let y = map(points.y[i].re, -3, 3, yOffset + height / 3, yOffset);
+    let x = map(points.x[i], -Math.PI, Math.PI, section.x, section.x + section.w);
+    // Map y using real part of complex number
+    let y = map(points.y[i].re, -3, 3, section.y + section.h, section.y);
     vertex(x, y);
   }
   endShape();
@@ -63,26 +92,28 @@ function drawFunction(points, yOffset, label) {
   fill(0);
   textSize(16);
   textAlign(LEFT);
-  text(label, 10, yOffset + 20);
+  text(label, section.x + 10, section.y + 20);
 }
 
-function drawSpectrum(spectrum, yOffset, coefficients) {
+function drawSpectrum(spectrum, coefficients) {
+  const section = layout.spectrum;
+  
   // Draw axes
   stroke(0);
-  line(0, yOffset + height / 6, width, yOffset + height / 6);  // x-axis (moved up)
-  line(0, yOffset, 0, yOffset + height / 3);                   // y-axis
+  line(section.x, section.y + section.h/2, section.x + section.w, section.y + section.h/2);  // x-axis (moved up)
+  line(section.x + section.w/2, section.y, section.x + section.w/2, section.y + section.h);   // y-axis
 
   // Draw magnitude spectrum
   stroke(255, 0, 0);
-  const barWidth = width / spectrum.length;
+  const barWidth = section.w / spectrum.length;
 
   // Draw spectrum bars and coefficients
   for (let i = 0; i < spectrum.length; i++) {
     const magnitude = Complex.magnitude(spectrum[i]);
-    const barHeight = map(magnitude, 0, N / 2, 0, height / 6);
+    const barHeight = map(magnitude, 0, N / 2, 0, section.h);
 
     fill(255, 0, 0, 150);
-    rect(i * barWidth, yOffset + height / 6,
+    rect(i * barWidth, section.y + section.h/2,
       barWidth - 2, -barHeight);
 
     // Add frequency labels
@@ -90,46 +121,83 @@ function drawSpectrum(spectrum, yOffset, coefficients) {
     noStroke();
     textAlign(CENTER);
     textSize(12);
-    text(i, i * barWidth + barWidth / 2, yOffset + height / 6 + 15);
+    text(i, i * barWidth + barWidth / 2, section.y + section.h/2 + 15);
 
     // Show coefficient values under frequency bars
     textAlign(LEFT);
     if (i <= N / 2) {
       // show a coefficients for all i values
       text(`a${i}=${coefficients.a[i].toFixed(3)}`,
-        i * barWidth * 2.5 + 10, yOffset + 20);
+        i * barWidth * 2.5 + 10, section.y + 20);
       if (i !== 0 && i !== N / 2) {
         // show b coefficients for all i except 0 and N/2
         text(`b${i}=${coefficients.b[i].toFixed(3)}`,
-          i * barWidth * 2.5 + 10, yOffset + 40);
+          i * barWidth * 2.5 + 10, section.y + 40);
       }
     }
   }
 }
 
-function drawReconstructed(coefficients, yOffset, label) {
+function drawInterpolated(coefficients, label) {
+  const section = layout.interpolated;
+  
   // Draw axes
   stroke(0);
-  line(0, yOffset + height / 6, width, yOffset + height / 6);  // x-axis
-  line(width / 2, yOffset, width / 2, yOffset + height / 3);   // y-axis
+  line(section.x, section.y + section.h/2, section.x + section.w, section.y + section.h/2);  // x-axis
+  line(section.x + section.w/2, section.y, section.x + section.w/2, section.y + section.h);   // y-axis
 
   // Draw label
   noStroke();
   fill(0);
   textSize(16);
   textAlign(LEFT);
-  text(label, 10, yOffset + 20);
+  text(label, section.x + 10, section.y + 20);
 
-  // Draw reconstructed function
+  // Draw interpolated function
   stroke(0, 255, 0);
   noFill();
   beginShape();
-  for (let i = 0; i < width; i++) {
-    const x = map(i, 0, width, -Math.PI, Math.PI);
+  for (let i = 0; i < section.w; i++) {
+    const x = map(i, 0, section.w, -Math.PI, Math.PI);
     const y = fft.evaluateSeries(coefficients, x);
-    vertex(i, map(y, -3, 3, yOffset + height / 3, yOffset));
+    vertex(i, map(y, -3, 3, section.y + section.h, section.y));
   }
   endShape();
+}
+
+function drawCoefficients(coefficients, label) {
+  const section = layout.coefficients;
+  const padding = 20;
+  const lineHeight = 20;
+  
+  // Draw label
+  noStroke();
+  fill(0);
+  textSize(16);
+  textAlign(LEFT);
+  text(label, section.x + 10, section.y + 20);
+
+  // Column headers
+  textSize(14);
+  const colWidth = (section.w - (padding * 3)) / 2;
+  text("a coefficients", section.x + padding, section.y + 40);
+  text("b coefficients", section.x + padding * 2 + colWidth, section.y + 40);
+
+  // Draw coefficients
+  textSize(12);
+  for (let i = 0; i <= N/2; i++) {
+    // a coefficients
+    text(`a${i} = ${coefficients.a[i].toFixed(4)}`,
+      section.x + padding,
+      section.y + 60 + (i * lineHeight));
+    
+    // b coefficients (skip b₀ and b_{N/2})
+    if (i !== 0 && i !== N/2) {
+      text(`b${i} = ${coefficients.b[i].toFixed(4)}`,
+        section.x + padding * 2 + colWidth,
+        section.y + 60 + (i * lineHeight));
+    }
+  }
 }
 
 // Unit Tests
@@ -234,16 +302,16 @@ function testFFT() {
     console.log("❌ Failed: a₂ coefficient incorrect");
   }
 
-  // Test series reconstruction
+  // Test series interpolation approximation
   totalTests++;
   const x = Math.PI / 4;
-  const reconstructed = testFFT.evaluateSeries(coeffs, x);
+  const interpolated = testFFT.evaluateSeries(coeffs, x);
   const expected = 0.25 + 0.5 * Math.sin(x) - 0.5 * Math.cos(2 * x);
-  if (Math.abs(reconstructed - expected) < 1e-10) {
-    console.log("✅ Passed: Series reconstruction correct");
+  if (Math.abs(interpolated - expected) < 1e-10) {
+    console.log("✅ Passed: Series interpolated correctly");
     testsPassed++;
   } else {
-    console.log("❌ Failed: Series reconstruction incorrect");
+    console.log("❌ Failed: Series interpolated incorrectly");
   }
 
   // Summary
