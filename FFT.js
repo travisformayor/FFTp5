@@ -210,8 +210,10 @@ class FFT {
 
             //  First term: ((a_0 + a_m*cos(mx))/2)
             let sum = (coefficients.a[0] + (coefficients.a[m] * Math.cos(m * x[j]))) / 2;
+            // let sum = (coefficients.a[0]) / 2;
 
             // Sum terms: sum(k=1 to m-1)(a_k*cos(kx) + b_k*sin(kx))
+            // for (let k = 1; k <= m; k++) {
             for (let k = 1; k < m; k++) {
                 sum += coefficients.a[k] * Math.cos(k * x[j]) +
                     coefficients.b[k] * Math.sin(k * x[j]);
