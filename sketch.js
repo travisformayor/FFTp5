@@ -109,6 +109,14 @@ function draw() {
 }
 
 function drawFunction(points, section, label, color = [0, 0, 255]) {
+  // Start a new drawing state
+  push();
+  
+  // Create clipping region for this section
+  clip(() => {
+    rect(section.x, section.y, section.w, section.h);
+  });
+
   // Draw axes
   stroke(0);
   line(section.x, section.y + section.h / 2, section.x + section.w, section.y + section.h / 2);  // x-axis
@@ -127,20 +135,17 @@ function drawFunction(points, section, label, color = [0, 0, 255]) {
   }
   endShape();
 
-  // Add x-axis markers for -π and π
+  // End drawing state (this also removes the clip)
+  pop();
+
+  // Draw labels outside of clipping region
   noStroke();
   fill(0);
   textSize(16);
   textAlign(CENTER);
-  // Draw -π marker
-  text("-π", section.x + 10, section.y + section.h/2 + 20);
-  // Draw π marker
-  text("π", section.x + section.w - 10, section.y + section.h/2 + 20);
+  text("-π", section.x + 10, section.y + section.h / 2 + 20);
+  text("π", section.x + section.w - 10, section.y + section.h / 2 + 20);
 
-  // Draw label
-  noStroke();
-  fill(0);
-  textSize(16);
   textAlign(LEFT);
   text(label, section.x + 10, section.y + 20);
 }
