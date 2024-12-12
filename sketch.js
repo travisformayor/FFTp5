@@ -1,6 +1,6 @@
 let fft;
-let functionString = "sin(x)";  // Default function
-let N = 16;  // Increase for smoother line (more points)
+let functionString = "cos(x)";  // Default function
+let N = 32;  // Increase for smoother line (more points)
 
 const width = 800;
 const height = 600;
@@ -8,7 +8,7 @@ const height = 600;
 // Layout section positions. x and y are top left corner
 const buffer = 10;
 const functionLabelWidth = 80;
-const inputBox = { x: functionLabelWidth, h: 25, w: 100 };
+const inputBox = { x: functionLabelWidth, h: 25, w: 200 };
 const dropdownLabelWidth = 25;
 const dropdownBox = { x: dropdownLabelWidth, h: 25, w: 60 };
 const spectrum = { h: 60 };
@@ -22,8 +22,9 @@ const coeffsBox = {
   w: width - body.w - (buffer * 3)
 };
 const layout = {
-  inputBox: { x: buffer + inputBox.x, y: buffer, w: inputBox.w, h: inputBox.h },
-  dropdownBox: { x: (buffer * 3) + inputBox.x + inputBox.w + dropdownBox.x, y: buffer, w: dropdownBox.w, h: dropdownBox.h },
+  functionDropdown: { x: buffer + inputBox.x, y: buffer, w: inputBox.w, h: inputBox.h },
+  inputBox: { x: buffer + inputBox.x + inputBox.w + buffer, y: buffer, w: inputBox.w, h: inputBox.h },
+  dropdownBox: { x: (buffer * 3) + inputBox.x + (inputBox.w * 2) + dropdownBox.x, y: buffer, w: dropdownBox.w, h: dropdownBox.h },
   original: { x: buffer, y: (buffer * 2) + inputBox.h, w: graph.w, h: graph.h },
   interpolated: { x: buffer, y: (buffer * 3) + inputBox.h + graph.h, w: graph.w, h: graph.h },
   spectrum: { x: buffer, y: (buffer * 4) + inputBox.h + (graph.h * 2), w: graph.w, h: spectrum.h },
@@ -35,17 +36,59 @@ function setup() {
   testFFT();
   fft = new FFT(N);
 
-  // Function input field
+  // Function selection dropdown
   let functionLabel = createElement('label', 'Function:');
-  functionLabel.position(layout.inputBox.x - functionLabelWidth, layout.inputBox.y);
+  functionLabel.position(layout.functionDropdown.x - functionLabelWidth, layout.functionDropdown.y);
   functionLabel.style('font-size', '20px');
 
-  let functionInput = createInput(functionString);
+  let functionSelect = createSelect();
+  functionSelect.position(layout.functionDropdown.x, layout.functionDropdown.y);
+  functionSelect.style('font-size', '18px');
+  functionSelect.size(layout.functionDropdown.w, layout.functionDropdown.h);
+
+  // Add function options
+  const functions = [
+    'cos(x)',
+    'cos(3x)',
+    'sin(x)',
+    'sin(2x)',
+    'sin(x^2)',
+    'e^x',
+    '|x|',
+    'x',
+    'pi(x-pi)',
+    'cos(pi*x)-2*sin(pi*x)',
+    'custom'
+  ];
+  functions.forEach(f => functionSelect.option(f));
+  functionSelect.selected(functionString);
+
+  // Custom function input field
+  let functionInput = createInput('');  // Start empty
   functionInput.position(layout.inputBox.x, layout.inputBox.y);
-  functionInput.size(layout.inputBox.w - 8, layout.inputBox.h - 6);  // Make room for label and dropdown
+  functionInput.size(layout.inputBox.w - 8, layout.inputBox.h - 6);
   functionInput.style('font-size', '18px');
+  functionInput.attribute('disabled', '');  // Initially disabled
+
+  // Handle dropdown changes
+  functionSelect.changed(() => {
+    const selected = functionSelect.value();
+    if (selected === 'custom') {
+      functionInput.removeAttribute('disabled');
+      functionInput.value(functionString);  // Show current function string when enabled
+      functionString = functionInput.value();
+    } else {
+      functionInput.attribute('disabled', '');
+      functionInput.value('');  // Clear the input when disabled
+      functionString = selected;
+    }
+  });
+
+  // Handle custom input changes
   functionInput.input(() => {
-    functionString = functionInput.value();
+    if (functionSelect.value() === 'custom') {
+      functionString = functionInput.value();
+    }
   });
 
   // N selection dropdown
@@ -95,7 +138,7 @@ function draw() {
     drawFunction(interpolatedPoints, layout.interpolated, 'Interpolated', [0, 255, 0]);
 
     // Draw spectrum and coefficients
-    drawSpectrum(result.spectrum, result.coefficients);
+    drawSpectrum(result.spectrum);
     drawCoefficients(result.coefficients, 'Coefficients');
 
   } catch (e) {
@@ -111,7 +154,6 @@ function draw() {
 function drawFunction(points, section, label, color = [0, 0, 255]) {
   // Start a new drawing state
   push();
-  
   // Create clipping region for this section
   clip(() => {
     rect(section.x, section.y, section.w, section.h);
@@ -150,7 +192,7 @@ function drawFunction(points, section, label, color = [0, 0, 255]) {
   text(label, section.x + 10, section.y + 20);
 }
 
-function drawSpectrum(spectrum, coefficients) {
+function drawSpectrum(spectrum) {
   const section = layout.spectrum;
 
   // Draw magnitude spectrum
