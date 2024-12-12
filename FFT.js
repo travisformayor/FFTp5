@@ -91,7 +91,6 @@ class FFT {
 
     // Retrieve the correct twiddle factor
     getTwiddleFactor(k, distance, N) {
-        // W_N^k = e^(-2πik/N) for k-th frequency at current stage
         // todo: add caching here
         const stageK = k * (N / (2 * distance));  // find twiddle factor index
         return this.W(stageK, N);
@@ -173,8 +172,14 @@ class FFT {
 
         // General cases: ak and bk
         for (let k = 1; k < this.N / 2; k++) {
-            coefficients.a[k] = (2 / this.N) * complexValues[k].re;
-            coefficients.b[k] = (2 / this.N) * complexValues[k].im;
+            if (k % 2 == 0) {
+                coefficients.a[k] = (2 / this.N) * complexValues[k].re;
+                coefficients.b[k] = -(2 / this.N) * complexValues[k].im;
+            } else {
+
+                coefficients.a[k] = -(2 / this.N) * complexValues[k].re;
+                coefficients.b[k] = (2 / this.N) * complexValues[k].im;
+            }
         }
 
         // End case: aN/2

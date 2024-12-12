@@ -1,6 +1,6 @@
 let fft;
 let functionString = "sin(x)";  // Default function
-let N = 8;  // Increase for smoother line (more points)
+let N = 16;  // Increase for smoother line (more points)
 
 const width = 800;
 const height = 600;
