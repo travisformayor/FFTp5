@@ -177,7 +177,7 @@ function drawFunction(points, section, label, color = [0, 0, 255]) {
   }
   endShape();
 
-  // End drawing state (this also removes the clip)
+  // End drawing state (removes the clip)
   pop();
 
   // Draw labels outside of clipping region
@@ -195,13 +195,19 @@ function drawFunction(points, section, label, color = [0, 0, 255]) {
 function drawSpectrum(spectrum) {
   const section = layout.spectrum;
 
-  // Draw magnitude spectrum
   stroke(255, 0, 0);
-  const barWidth = section.w / spectrum.length;
+  const barWidth = section.w / (spectrum.length / 2);
 
-  for (let i = 0; i < spectrum.length; i++) {
+  // Find the maximum magnitude for scaling
+  let maxMagnitude = 0;
+  for (let i = 0; i < spectrum.length / 2; i++) {
+    maxMagnitude = Math.max(maxMagnitude, Complex.magnitude(spectrum[i]));
+  }
+
+  for (let i = 0; i < spectrum.length / 2; i++) {
     const magnitude = Complex.magnitude(spectrum[i]);
-    const barHeight = map(magnitude, 0, N, 0, section.h);
+    // Map magnitude to [0, section.h] using the actual maximum magnitude
+    const barHeight = map(magnitude, 0, maxMagnitude, 0, section.h);
 
     fill(255, 0, 0, 150);
     rect(i * barWidth + section.x + 1.5, section.y,
@@ -220,6 +226,13 @@ function drawCoefficients(coefficients, label) {
   const section = layout.coefficients;
   const padding = 20;
   const lineHeight = 20;
+
+  // Start a new drawing state
+  push();
+  // Create clipping region for this section
+  clip(() => {
+    rect(section.x, section.y, section.w, section.h);
+  });
 
   // Draw label
   noStroke();
@@ -246,6 +259,9 @@ function drawCoefficients(coefficients, label) {
         section.y + 40 + (i * lineHeight));
     }
   }
+
+  // End drawing state (removes the clip)
+  pop();
 }
 
 // Unit Tests
