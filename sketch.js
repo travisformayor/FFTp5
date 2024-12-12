@@ -123,15 +123,13 @@ function draw() {
   }
 
   try {
-    // Generate points for displaying original and use in interpolation
+    // Draw original function
     const highResPoints = fft.generatePoints(functionString, 256);
-    const fftPoints = fft.generatePoints(functionString);
+    drawFunction(highResPoints, layout.original, 'Original', [0, 0, 255]);
 
     // Compute FFT and get coefficients
+    const fftPoints = fft.generatePoints(functionString);
     const result = fft.computeFunction(fftPoints);
-
-    // Draw original function
-    drawFunction(highResPoints, layout.original, 'Original', [0, 0, 255]);
 
     // Draw interpolated function
     const interpolatedPoints = fft.generateInterpolatedPoints(result.coefficients);

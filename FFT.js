@@ -6,6 +6,7 @@ class FFT {
         this.bitReverseLookup = this.createBitReverseLookup();
     }
 
+    // === Initial Setup Methods === //
     validateN(N) {
         if (N <= 0 || (N & (N - 1)) !== 0) {
             throw new Error('N must be a positive power of 2');
@@ -25,6 +26,19 @@ class FFT {
         }
 
         return lookup;
+    }
+
+    generatePoints(funcStr, numPoints = this.N) {
+        const x = new Array(numPoints);
+        const y = new Array(numPoints);
+
+        // Generate points
+        for (let j = 0; j < numPoints; j++) {
+            x[j] = -Math.PI + (2 * Math.PI * j) / (numPoints);
+            y[j] = new Complex(this.evaluateFunction(funcStr, x[j]));
+        }
+
+        return { x, y };
     }
 
     // Parse and evaluate function string at given x
@@ -58,17 +72,49 @@ class FFT {
         }
     }
 
-    generatePoints(funcStr, numPoints = this.N) {
-        const x = new Array(numPoints);
-        const y = new Array(numPoints);
+    // === FFT Methods === //
+    computeFunction(points) {
+        const spectrum = this.butterflyCompute(points.y);
+        const coefficients = this.extractCoefficients(spectrum);
 
-        // Generate points
-        for (let j = 0; j < numPoints; j++) {
-            x[j] = -Math.PI + (2 * Math.PI * j) / (numPoints);
-            y[j] = new Complex(this.evaluateFunction(funcStr, x[j]));
+        return {
+            spectrum,
+            coefficients,
+            points
+        };
+    }
+
+    // Compute complex numbers using butterfly pairs
+    butterflyCompute(input) {
+        // Verify input length
+        if (input.length !== this.N) {
+            throw new Error(`Input length must be ${this.N}`);
         }
 
-        return { x, y };
+        // Start with bit-reversed input
+        const X = this.applyBitReversal(input);
+
+        // Butterfly computation
+        for (let stage = 1; stage <= Math.log2(this.N); stage++) {
+            const pairs = this.getButterflyPairs(stage, this.N);
+
+            for (const { pair: [evenIndex, oddIndex], k, distance } of pairs) {
+                const even = X[evenIndex];
+                const odd = X[oddIndex];
+
+                // Multiply twiddle by odd BEFORE adding/subtracting
+                const twiddle = this.getTwiddleFactor(k, distance, this.N);
+                const product = Complex.multiply(odd, twiddle);
+
+                // Forward FFT butterfly operation:
+                // New Even = Even + (Twiddle × Odd)
+                // New Odd  = Even - (Twiddle × Odd)
+                X[evenIndex] = Complex.add(even, product);
+                X[oddIndex] = Complex.subtract(even, product);
+            }
+        }
+
+        return X;
     }
 
     // Select the correct pairs for each butterfly round
@@ -135,39 +181,6 @@ class FFT {
         return X;
     }
 
-    // Compute complex numbers using butterfly pairs
-    butterflyCompute(input) {
-        // Verify input length
-        if (input.length !== this.N) {
-            throw new Error(`Input length must be ${this.N}`);
-        }
-
-        // Start with bit-reversed input
-        const X = this.applyBitReversal(input);
-
-        // Butterfly computation
-        for (let stage = 1; stage <= Math.log2(this.N); stage++) {
-            const pairs = this.getButterflyPairs(stage, this.N);
-
-            for (const { pair: [evenIndex, oddIndex], k, distance } of pairs) {
-                const even = X[evenIndex];
-                const odd = X[oddIndex];
-
-                // Multiply twiddle by odd BEFORE adding/subtracting
-                const twiddle = this.getTwiddleFactor(k, distance, this.N);
-                const product = Complex.multiply(odd, twiddle);
-
-                // Forward FFT butterfly operation:
-                // New Even = Even + (Twiddle × Odd)
-                // New Odd  = Even - (Twiddle × Odd)
-                X[evenIndex] = Complex.add(even, product);
-                X[oddIndex] = Complex.subtract(even, product);
-            }
-        }
-
-        return X;
-    }
-
     extractCoefficients(complexValues) {
         const coefficients = {
             a: new Array(this.N / 2 + 1).fill(0),
@@ -193,18 +206,6 @@ class FFT {
         coefficients.a[this.N / 2] = (1 / this.N) * complexValues[this.N / 2].re;
 
         return coefficients;
-    }
-
-    // Helper method to compute FFT of a function
-    computeFunction(points) {
-        const spectrum = this.butterflyCompute(points.y);
-        const coefficients = this.extractCoefficients(spectrum);
-
-        return {
-            spectrum,
-            coefficients,
-            points
-        };
     }
 
     generateInterpolatedPoints(coefficients) {
