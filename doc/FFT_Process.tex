@@ -3,7 +3,10 @@
 \usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage[margin=1in]{geometry}
+\usepackage{times}
 
 \title{Process for Forward Fast Fourier Transform (FFT) Numerical Computation}
 \author{}
@@ -11,11 +14,8 @@
 
 \begin{document}
 \maketitle
-\subsection*{Description}
-Forward FFT takes time domain data points and converts them to frequency domain coefficients.
-
-\subsection*{Process Overview}
-Solve for complex numbers ($C_k$), then convert to $a,b$ coefficients for use in trigonometric interpolation equation. 
+\subsection*{Overview}
+Forward FFT takes time domain data points and converts them to frequency domain coefficients. First it solves for complex numbers ($C_k$), then converts to $a,b$ coefficients for use in partial sums trigonometric interpolation equation. 
 
 \section*{Prerequisites}
 \begin{itemize}
@@ -122,5 +122,39 @@ Convert complex values to $a_k$ and $b_k$ values:
 \section*{Step 5) Construct Fourier series approximation}
 Interpolating Polynomial Equation for FFT:
 \[S_m(x) = \frac{a_0 + a_m\cos(mx)}{2} + \sum_{k=1}^{m-1}(a_k\cos(kx) + b_k\sin(kx))\]
+
+\section*{Numerical Computation Implementation}
+To validate the FFT process above was correct we implemented it from scratch in p5.js, creating an interactive web interface on top that allows users to analyze arbitrary functions. User selected functions are sampled at $N$ points between $-\pi$ and $\pi$, our FFT computes the complex coefficients and derives the $a_k$ and $b_k$ coefficients. Those coefficients are used to construct the Fourier series partial sum approximation, which is then graphed below the original function for comparison. The magnitude of each coefficient calculated and displayed on the bottom. The user can either select from predefined functions or input custom functions, and adjust the $N$ sampling resolution. \\
+\\
+\textbf{Click Play icon in top left to run the app:} \\
+\url{https://editor.p5js.org/travisformayor/sketches/by5UTP__f}
+
+\begin{figure}[htbp]
+\centering
+\begin{tabular}{cc}
+\includegraphics[width=0.45\textwidth]{img-cos3x.png} &
+\includegraphics[width=0.45\textwidth]{img-custom.png} \\ [-5pt]
+
+{\footnotesize $f(x) = cos(3x)$} & 
+{\footnotesize $f(x) = sin(x)+sin(2x)+sin(3x)$} \\ [-2.5pt]
+
+{\footnotesize Notice 3rd spectrum.} &
+{\footnotesize Notice 1, 2, and 3 spectrums.} \\[10pt]
+
+\includegraphics[width=0.45\textwidth]{img-sinx2.png} & 
+\includegraphics[width=0.45\textwidth]{img-x.png} \\ [-5pt]
+
+{\footnotesize $f(x) = sin(x^2)$} & 
+{\footnotesize $f(x) = x$} \\ [-2.5pt]
+
+{\footnotesize } &
+{\footnotesize Notice the break on the end. See below for more } \\[-2.5pt]
+{\footnotesize } &
+{\footnotesize information on the Gibbs Phenomenon.} \\[10pt]
+
+\end{tabular}
+\end{figure}
+
+Gibbs Phenomenon occurs near points in a Fourier transformation involving a complete revolution of the unit circle. Since FFT trigonometric interpolation is constructed using a combination of sine and cosine functions to create a best fit, it utilizes the periodicity of the unit circle ($2\pi$ to make a complete revolution) and, therefore, has large jumps at points of discontinuity. Take, for example, the function $f(x) = x$ (pictured above). Since $x$ is not periodic and is instead monotonically increasing, once the interpolation of the function nears points that are a multiple of $\pm \pi$, the natural periodicity of the sine and cosine functions being used to make the best fit of the function have a huge jump as they attempt to "reset" to their negative side of the unit circle. This does not happen to functions in the program that are periodic, such as $\sin(x)$, $\cos(x)$, $x^2$, or $|x|$, but other examples where it does occur would be any constant times $x$ ($2x$, $3x$, ...), $e^x$, or $x$ to an odd degree ($x^3$, $x^5$, ...).
 
 \end{document}

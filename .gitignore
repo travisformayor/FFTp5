@@ -17,3 +17,6 @@
 
 # IDE files
 .cursorrules
+
+# System files
+.DS_Store
