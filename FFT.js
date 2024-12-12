@@ -33,12 +33,19 @@ class FFT {
         const withConstants = funcStr
             // Replace pi with the value of Math.PI
             .replace(/\bpi\b/gi, '(' + Math.PI + ')')
+            // Replace standalone e with Math.E
+            .replace(/\be\b/g, '(' + Math.E + ')')
+            // Replace ^ with Math.pow
+            .replace(/(\d+|e|\(.*?\)|\w+|\))\s*\^+\s*(\w+|\(.*?\)|-?\d+(\.\d+)?)/g, 'Math.pow($1,$2)')
             // Replace |x| with Math.abs(x)
             .replace(/\|(.*?)\|/g, 'Math.abs($1)')
             // Add explicit multiplication for adjacent terms
-            .replace(/(\d|pi|\))\s*(\(|\|)/g, '$1*$2')  // handle pi(x) -> pi*(x) (also 2(x) & 2|x|)
+            .replace(/(\d|\))\s*(\(|\|)/g, '$1*$2')     // handle 2(x) & 2|x|
             .replace(/\)\s*(\w|\|)/g, ')*$1')           // handle sin(x)|x| -> sin(x)*|x|
-            .replace(/\|\s*(\w|\()/g, '|*$1');          // handle |x|sin(x) -> |x|*sin(x)
+            .replace(/\|\s*(\w|\()/g, '|*$1')           // handle |x|sin(x) -> |x|*sin(x)
+            // Add explicit multiplication for terms touching 'x'
+            .replace(/(\d+)x/g, '$1*x')                 // handle 2x -> 2*x
+            .replace(/x(\d+)/g, 'x*$1');                // handle x2 -> x*2
 
         // Replace 'x' strings with x variable
         const evalStr = withConstants

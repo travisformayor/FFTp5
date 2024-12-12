@@ -61,6 +61,7 @@ function setup() {
   nSelect.option('8');
   nSelect.option('16');
   nSelect.option('32');
+  nSelect.option('64');
   nSelect.selected(N.toString());
   nSelect.changed(() => {
     N = parseInt(nSelect.value());
@@ -80,7 +81,7 @@ function draw() {
 
   try {
     // Generate points for displaying original and use in interpolation
-    const highResPoints = fft.generatePoints(functionString, 64);
+    const highResPoints = fft.generatePoints(functionString, 256);
     const fftPoints = fft.generatePoints(functionString);
 
     // Compute FFT and get coefficients
