@@ -11,7 +11,8 @@
 6. Coefficient Extraction (Step 4)
 7. Fourier Series Construction (Step 5)
 8. Visualizations
-9. Basic test suite
+9. Function and N-point interactive UI options
+10. Unit tests of all math process steps
 
 ### Project Structure
 - `index.html`: P5.js setup and configuration
@@ -19,40 +20,26 @@
 - `FFT.js`: Main FFT class implementation
 - `sketch.js`: Testing and visualization framework
 
-## Development Roadmap
-
-### Current Issues
-
-1. f(x) = x not working. Issue in butterfly pairs or looping twiddle factors?
-1. sin and cos are inverted.
-
-### Pending Implementation
-
-1. Additional Testing
-   - Add test for coefficient extraction
-   - Add test for series interpolation approximation
-   - Add test for butterfly computation
-
 ## Technical Specifications
 
 ### Implementation Details
 - Input size (N) must be a power of 2
 - Complex numbers represented as `{re, im}` objects
-- Twiddle factors (W) precomputed for performance
+- Twiddle factors (W) computed with looping optimization
+- Supports arbitrary function input via string parsing
+- Interactive visualization with real-time updates
 
 ### Testing Strategy
 
-#### Existing Test Coverage
+#### Test Coverage
 1. Power of 2 input validation
-2. Twiddle factor computation accuracy
-3. Bit reversal algorithm correctness
-4. Point generation and spacing verification
+2. Point generation and spacing verification
+3. Bit reversal algorithm
+4. Butterfly pair generation for all stages
+5. Twiddle factor computation accuracy
 
-## Contributing
-When implementing new features or modifications:
-1. Maintain mathematical precision
-2. Follow the process latex document
-3. Prioritize code readability
-4. Add comprehensive test cases
-5. Document mathematical foundations
-6. Handle edge cases appropriately
+### Next Steps
+
+- Precompute twiddle factors for performance
+- Add unit tests for complex number operations
+- Add unit tests for function string parsing and evaluation
