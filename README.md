@@ -21,6 +21,11 @@
 
 ## Development Roadmap
 
+### Current Issues
+
+1. f(x) = x not working. Issue in butterfly pairs or looping twiddle factors?
+1. sin and cos are inverted.
+
 ### Pending Implementation
 
 1. Additional Testing
