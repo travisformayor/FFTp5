@@ -126,6 +126,16 @@ function drawFunction(points, section, label, color = [0, 0, 255]) {
   }
   endShape();
 
+  // Add x-axis markers for -π and π
+  noStroke();
+  fill(0);
+  textSize(16);
+  textAlign(CENTER);
+  // Draw -π marker
+  text("-π", section.x + 10, section.y + section.h/2 + 20);
+  // Draw π marker
+  text("π", section.x + section.w - 10, section.y + section.h/2 + 20);
+
   // Draw label
   noStroke();
   fill(0);
